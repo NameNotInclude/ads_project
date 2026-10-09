@@ -69,7 +69,7 @@ int main(int argc, char*argv[])
 		printf("AVL, delete in reverse order\nnumber of node:%d,iteration:%d time cost:%ld\n",temp,iter,(long)(end-start));
 	}
 
-	else if (strcmp(argv[2],"RBT")==0)
+	else if (strcmp(argv[3],"RBT")==0)
 	{
 		PtrToRNode initial=NULL;
 
