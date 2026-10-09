@@ -9,8 +9,8 @@
 ├── AVL.h / AVL.c        # AVL 树的实现
 ├── RBT.h / RBT.c        # 红黑树的实现
 ├── main.c               # 基准测试入口
-├── testdata/
-│   └── test.py          # 生成随机测试数据的脚本
+├── random_generate/
+│   └── test.py          # 生成随机删除顺序的脚本
 └── main                 # 编译产物（可执行文件）
 ```
 
@@ -84,23 +84,34 @@ gcc -O2 -o main main.c AVL.c RBT.c
 
 ```
 AVL, delete in same order
-number of node:10000,iteration:100 time cost:12
+number of node:10000,iteration:100 time cost:77.070 ms
 AVL, delete in reverse order
-number of node:10000,iteration:100 time cost:10
+number of node:10000,iteration:100 time cost:71.999 ms
+AVL, delete in random order
+number of node:10000,iteration:100 time cost:228.599 ms
 ```
 
-每种结构都会测试两种删除顺序：
+> 计时使用 `clock_gettime(CLOCK_MONOTONIC)` 的**毫秒级**单调时钟，不受系统时间调整影响。
+
+每种结构都会测试三种删除顺序（插入顺序固定为递增的 `1..N`）：
 
 1. **同序删除**：按插入顺序 `1..N` 删除；
-2. **逆序删除**：按 `N..1` 逆序删除。
+2. **逆序删除**：按 `N..1` 逆序删除；
+3. **随机删除**：由 C 内置的 Fisher-Yates 洗牌生成的随机排列顺序删除。
+
+> 随机顺序在 `main.c` 中直接生成（`Random_order`），每次迭代重新洗牌，
+> 洗牌时间不计入计时；随机种子为当前系统时间，
+> 不依赖外部脚本。
 
 ## 测试数据
 
-`testdata/test.py` 可生成一组 `0..N-1` 的随机打乱序列：
+`random_generate/test.py` 仍可用于独立生成一组 `0..N-1` 的随机打乱序列：
 
 ```bash
-python3 testdata/test.py 100 > testdata/input.txt
+python3 random_generate/test.py 100 > random_generate/input.txt
 ```
+
+注意：`main.c` 的随机删除已改为 C 内置洗牌，不再调用该脚本。
 
 ## 复杂度
 
@@ -124,5 +135,4 @@ python3 testdata/test.py 100 > testdata/input.txt
 - **B树**,
 - **splay树**
 - **普通BST**
-- **随机删除**
 
