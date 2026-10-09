@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include "RBT.h"
 
-PtrToNode RightRot(PtrToNode RBT)
+PtrToRNode RightRotR(PtrToRNode RBT)
 {
-    PtrToNode L = RBT->left;
-    PtrToNode P = RBT->parent;
+    PtrToRNode L = RBT->left;
+    PtrToRNode P = RBT->parent;
 
     RBT->left = L->right;
     if (L->right != NULL)
@@ -27,10 +27,10 @@ PtrToNode RightRot(PtrToNode RBT)
     return L;
 }
 
-PtrToNode LeftRot(PtrToNode RBT)
+PtrToRNode LeftRotR(PtrToRNode RBT)
 {
-    PtrToNode R = RBT->right;
-    PtrToNode P = RBT->parent;
+    PtrToRNode R = RBT->right;
+    PtrToRNode P = RBT->parent;
 
     RBT->right = R->left;
     if (R->left != NULL)
@@ -52,9 +52,9 @@ PtrToNode LeftRot(PtrToNode RBT)
     return R;
 }
 
-PtrToNode insert(PtrToNode RBT,int key)
+PtrToRNode insertRBT(PtrToRNode RBT,int key)
 {
-    PtrToNode curr=RBT,prev=NULL;
+    PtrToRNode curr=RBT,prev=NULL;
     while (curr)
     {
         if (key < curr->data)
@@ -71,14 +71,14 @@ PtrToNode insert(PtrToNode RBT,int key)
             return RBT;
     }
 
-    PtrToNode newnode=(PtrToNode)malloc(sizeof(node));
+    PtrToRNode newnode=(PtrToRNode)malloc(sizeof(Rnode));
     newnode->color=RED;
     newnode->data=key;
     newnode->left=NULL;
     newnode->right=NULL;
     newnode->parent=prev;
 
-    PtrToNode father=prev,uncle,grandfather;
+    PtrToRNode father=prev,uncle,grandfather;
 
     //插入根节点
     if (father==NULL)
@@ -128,11 +128,11 @@ PtrToNode insert(PtrToNode RBT,int key)
                 // LR：先左旋父亲
                 if (newnode==father->right)
                 {
-                    newnode=LeftRot(father);
+                    newnode=LeftRotR(father);
                     father=newnode->parent;
                 }
                 // LL：右旋祖父
-                PtrToNode sub=RightRot(grandfather);
+                PtrToRNode sub=RightRotR(grandfather);
                 sub->color=BLACK;
                 sub->right->color=RED;
             }
@@ -141,11 +141,11 @@ PtrToNode insert(PtrToNode RBT,int key)
                 // RL：先右旋父亲
                 if (newnode==father->left)
                 {
-                    newnode=RightRot(father);
+                    newnode=RightRotR(father);
                     father=newnode->parent;
                 }
                 // RR：左旋祖父
-                PtrToNode sub=LeftRot(grandfather);
+                PtrToRNode sub=LeftRotR(grandfather);
                 sub->color=BLACK;
                 sub->left->color=RED;
             }
@@ -162,9 +162,9 @@ PtrToNode insert(PtrToNode RBT,int key)
     return RBT;
 }
 
-PtrToNode findmin(PtrToNode RBT)
+PtrToRNode findmin(PtrToRNode RBT)
 {
-    PtrToNode check = RBT;
+    PtrToRNode check = RBT;
     while (check->left)
     {
         check = check->left;
@@ -174,7 +174,7 @@ PtrToNode findmin(PtrToNode RBT)
 }
 
 // 用 v 替换 u 的位置（v 可以为 NULL），返回新的树根
-static PtrToNode transplant(PtrToNode RBT, PtrToNode u, PtrToNode v)
+static PtrToRNode transplant(PtrToRNode RBT, PtrToRNode u, PtrToRNode v)
 {
     if (u->parent == NULL)
         RBT = v;
@@ -191,7 +191,7 @@ static PtrToNode transplant(PtrToNode RBT, PtrToNode u, PtrToNode v)
 
 // 删除后的调整：x 是缺失一重黑色的结点（可能为 NULL），
 // parent 是 x 的父亲（x 为 NULL 时用它定位）
-static PtrToNode deleteFixup(PtrToNode RBT, PtrToNode x, PtrToNode parent)
+static PtrToRNode deleteFixup(PtrToRNode RBT, PtrToRNode x, PtrToRNode parent)
 {
     while (x != RBT && IS_BLACK(x))
     {
@@ -200,7 +200,7 @@ static PtrToNode deleteFixup(PtrToNode RBT, PtrToNode x, PtrToNode parent)
 
         if (x == parent->left)
         {
-            PtrToNode w = parent->right;   // 兄弟结点
+            PtrToRNode w = parent->right;   // 兄弟结点
 
             if (w == NULL)
             {
@@ -215,16 +215,16 @@ static PtrToNode deleteFixup(PtrToNode RBT, PtrToNode x, PtrToNode parent)
                 w->color = BLACK;
                 parent->color = RED;
                 if (parent == RBT)
-                    RBT = LeftRot(parent);
+                    RBT = LeftRotR(parent);
                 else
-                    LeftRot(parent);
+                    LeftRotR(parent);
                 w = parent->right;
             }
 
             // 情况二：兄弟的两个孩子都是黑色
             if (IS_BLACK(w->left) && IS_BLACK(w->right))
             {
-                w->color;
+                w->color = RED;
                 x = parent;
                 parent = x->parent;
             }
@@ -236,7 +236,7 @@ static PtrToNode deleteFixup(PtrToNode RBT, PtrToNode x, PtrToNode parent)
                     if (w->left != NULL)
                         w->left->color = BLACK;
                     w->color = RED;
-                    RightRot(w);
+                    RightRotR(w);
                     w = parent->right;
                 }
 
@@ -246,9 +246,9 @@ static PtrToNode deleteFixup(PtrToNode RBT, PtrToNode x, PtrToNode parent)
                 if (w->right != NULL)
                     w->right->color = BLACK;
                 if (parent == RBT)
-                    RBT = LeftRot(parent);
+                    RBT = LeftRotR(parent);
                 else
-                    LeftRot(parent);
+                    LeftRotR(parent);
 
                 x = RBT;
                 parent = NULL;
@@ -257,7 +257,7 @@ static PtrToNode deleteFixup(PtrToNode RBT, PtrToNode x, PtrToNode parent)
         }
         else
         {
-            PtrToNode w = parent->left;    // 兄弟结点
+            PtrToRNode w = parent->left;    // 兄弟结点
 
             if (w == NULL)
             {
@@ -272,9 +272,9 @@ static PtrToNode deleteFixup(PtrToNode RBT, PtrToNode x, PtrToNode parent)
                 w->color = BLACK;
                 parent->color = RED;
                 if (parent == RBT)
-                    RBT = RightRot(parent);
+                    RBT = RightRotR(parent);
                 else
-                    RightRot(parent);
+                    RightRotR(parent);
                 w = parent->left;
             }
 
@@ -293,7 +293,7 @@ static PtrToNode deleteFixup(PtrToNode RBT, PtrToNode x, PtrToNode parent)
                     if (w->right != NULL)
                         w->right->color = BLACK;
                     w->color = RED;
-                    LeftRot(w);
+                    LeftRotR(w);
                     w = parent->left;
                 }
 
@@ -303,9 +303,9 @@ static PtrToNode deleteFixup(PtrToNode RBT, PtrToNode x, PtrToNode parent)
                 if (w->left != NULL)
                     w->left->color = BLACK;
                 if (parent == RBT)
-                    RBT = RightRot(parent);
+                    RBT = RightRotR(parent);
                 else
-                    RightRot(parent);
+                    RightRotR(parent);
 
                 x = RBT;
                 parent = NULL;
@@ -320,10 +320,10 @@ static PtrToNode deleteFixup(PtrToNode RBT, PtrToNode x, PtrToNode parent)
     return RBT;
 }
 
-PtrToNode deleteNode(PtrToNode RBT, int key)
+PtrToRNode deleteRBT(PtrToRNode RBT, int key)
 {
     // 先找到要删除的结点 z
-    PtrToNode z = RBT;
+    PtrToRNode z = RBT;
     while (z != NULL)
     {
         if (key < z->data)
@@ -337,10 +337,10 @@ PtrToNode deleteNode(PtrToNode RBT, int key)
     if (z == NULL)          // 不存在，原树不变
         return RBT;
 
-    PtrToNode y = z;                        // 真正被摘除的结点
+    PtrToRNode y = z;                        // 真正被摘除的结点
     int y_original_color = y->color;
-    PtrToNode x;                            // 接替 y 的结点（可能为 NULL）
-    PtrToNode xParent;                      // x 的父亲
+    PtrToRNode x;                            // 接替 y 的结点（可能为 NULL）
+    PtrToRNode xParent;                      // x 的父亲
 
     if (z->left == NULL)
     {

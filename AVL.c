@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "AVL.h"
 
-void update(PtrToNode AVL)
+void update(PtrToANode AVL)
 {
     if (AVL == NULL)
         return;
@@ -14,9 +14,9 @@ void update(PtrToNode AVL)
     AVL->bf = h_l - h_r;
 }
 
-PtrToNode RightRot(PtrToNode AVL)
+PtrToANode RightRotA(PtrToANode AVL)
 {
-    PtrToNode L = AVL->left;
+    PtrToANode L = AVL->left;
 
     AVL->left = L->right;
     L->right = AVL;
@@ -27,9 +27,9 @@ PtrToNode RightRot(PtrToNode AVL)
     return L;
 }
 
-PtrToNode LeftRot(PtrToNode AVL)
+PtrToANode LeftRotA(PtrToANode AVL)
 {
-    PtrToNode R = AVL->right;
+    PtrToANode R = AVL->right;
 
     AVL->right = R->left;
     R->left = AVL;
@@ -40,11 +40,11 @@ PtrToNode LeftRot(PtrToNode AVL)
     return R;
 }
 
-PtrToNode insert(PtrToNode AVL,int n)
+PtrToANode insertAVL(PtrToANode AVL,int n)
 {
     if (AVL==NULL)
     {
-        PtrToNode newnode = (PtrToNode)malloc(sizeof(node));
+        PtrToANode newnode = (PtrToANode)malloc(sizeof(Anode));
         newnode->data = n;
         newnode->bf = 0;
         newnode->height = 0;
@@ -55,9 +55,9 @@ PtrToNode insert(PtrToNode AVL,int n)
     }
 
     if (n < AVL->data)
-        AVL->left = insert(AVL->left, n);
+        AVL->left = insertAVL(AVL->left, n);
     else if (n > AVL->data)
-        AVL->right = insert(AVL->right, n);
+        AVL->right = insertAVL(AVL->right, n);
     else
         return AVL;
 
@@ -65,32 +65,32 @@ PtrToNode insert(PtrToNode AVL,int n)
 
     // LL
     if (AVL->bf > 1 && AVL->left != NULL && AVL->left->bf >= 0)
-        return RightRot(AVL);
+        return RightRotA(AVL);
 
     // RR
     if (AVL->bf < -1 && AVL->right != NULL && AVL->right->bf <= 0)
-        return LeftRot(AVL);
+        return LeftRotA(AVL);
 
     // LR
     if (AVL->bf > 1 && AVL->left != NULL && AVL->left->bf < 0)
     {
-        AVL->left = LeftRot(AVL->left);
-        return RightRot(AVL);
+        AVL->left = LeftRotA(AVL->left);
+        return RightRotA(AVL);
     }
 
     // RL
     if (AVL->bf < -1 && AVL->right != NULL && AVL->right->bf > 0)
     {
-        AVL->right = RightRot(AVL->right);
-        return LeftRot(AVL);
+        AVL->right = RightRotA(AVL->right);
+        return LeftRotA(AVL);
     }
 
     return AVL;
 }
 
-PtrToNode FindMin(PtrToNode AVL)
+PtrToANode FindMin(PtrToANode AVL)
 {
-    PtrToNode curr=AVL;
+    PtrToANode curr=AVL;
 
     while (curr != NULL && curr->left != NULL)
         curr = curr->left;
@@ -98,27 +98,27 @@ PtrToNode FindMin(PtrToNode AVL)
     return curr;
 }
 
-PtrToNode deleteNode(PtrToNode AVL,int key)
+PtrToANode deleteAVL(PtrToANode AVL,int key)
 {
     if (AVL == NULL)
         return NULL;
 
     if (AVL->data > key)
-        AVL->left = deleteNode(AVL->left, key);
+        AVL->left = deleteAVL(AVL->left, key);
     else if (AVL->data < key)
-        AVL->right = deleteNode(AVL->right, key);
+        AVL->right = deleteAVL(AVL->right, key);
     else
     {
         if (AVL->left == NULL || AVL->right == NULL)
         {
-            PtrToNode temp = AVL->left ? AVL->left : AVL->right;
+            PtrToANode temp = AVL->left ? AVL->left : AVL->right;
             free(AVL);
             return temp;
         }
 
-        PtrToNode temp = FindMin(AVL->right);
+        PtrToANode temp = FindMin(AVL->right);
         AVL->data = temp->data;
-        AVL->right = deleteNode(AVL->right, temp->data);
+        AVL->right = deleteAVL(AVL->right, temp->data);
     }
 
     update(AVL);
@@ -128,24 +128,24 @@ PtrToNode deleteNode(PtrToNode AVL,int key)
 
     // LL
     if (AVL->bf > 1 && AVL->left != NULL && AVL->left->bf >= 0)
-        return RightRot(AVL);
+        return RightRotA(AVL);
 
     // RR
     if (AVL->bf < -1 && AVL->right != NULL && AVL->right->bf <= 0)
-        return LeftRot(AVL);
+        return LeftRotA(AVL);
 
     // LR
     if (AVL->bf > 1 && AVL->left != NULL && AVL->left->bf < 0)
     {
-        AVL->left = LeftRot(AVL->left);
-        return RightRot(AVL);
+        AVL->left = LeftRotA(AVL->left);
+        return RightRotA(AVL);
     }
 
     // RL
     if (AVL->bf < -1 && AVL->right != NULL && AVL->right->bf > 0)
     {
-        AVL->right = RightRot(AVL->right);
-        return LeftRot(AVL);
+        AVL->right = RightRotA(AVL->right);
+        return LeftRotA(AVL);
     }
 
     return AVL;
