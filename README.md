@@ -99,19 +99,8 @@ number of node:10000,iteration:100 time cost:228.599 ms
 2. **逆序删除**：按 `N..1` 逆序删除；
 3. **随机删除**：由 C 内置的 Fisher-Yates 洗牌生成的随机排列顺序删除。
 
-> 随机顺序在 `main.c` 中直接生成（`Random_order`），每次迭代重新洗牌，
-> 洗牌时间不计入计时；随机种子为当前系统时间，
+> 随机顺序在 `main.c` 中直接生成（`makeRandomOrder`），随机种子为当前系统时间，
 > 不依赖外部脚本。
-
-## 测试数据
-
-`random_generate/test.py` 仍可用于独立生成一组 `0..N-1` 的随机打乱序列：
-
-```bash
-python3 random_generate/test.py 100 > random_generate/input.txt
-```
-
-注意：`main.c` 的随机删除已改为 C 内置洗牌，不再调用该脚本。
 
 ## 复杂度
 
