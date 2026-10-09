@@ -28,19 +28,189 @@ static double now_ms(void)
 	return (double)ts.tv_sec * 1000.0 + (double)ts.tv_nsec / 1000000.0;
 }
 
+void testAVL(int temp,int iter,int* input,int* randomOrder,FILE* write)
+{
+	PtrToANode initial=NULL;
+	double insert_total, delete_total;
+	double start, end;
+
+		//delete in same order
+		insert_total = 0;
+		delete_total = 0;
+		for (int k=0;k<iter;k++)
+		{
+			start = now_ms();
+			for (int i=0;i<temp;i++)
+			{
+				initial=insertAVL(initial,input[i]);
+			}
+			end = now_ms();
+			insert_total += end - start;
+
+			start = now_ms();
+			for (int i=0;i<temp;i++)
+			{
+				initial=deleteAVL(initial,input[i]);
+			}
+			end = now_ms();
+			delete_total += end - start;
+		}
+		printf("AVL, delete in same order\nnumber of node:%d,iteration:%d insert time cost:%.3f ms, delete time cost:%.3f ms\n",temp,iter,insert_total,delete_total);
+		fprintf(write,"AVL,%d,Same_Order,%d,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,delete_total,delete_total/iter);
+
+		//delete in reverse order
+		insert_total = 0;
+		delete_total = 0;
+		for (int k=0;k<iter;k++)
+		{
+			start = now_ms();
+			for (int i=0;i<temp;i++)
+			{
+				initial=insertAVL(initial,input[i]);
+			}
+			end = now_ms();
+			insert_total += end - start;
+
+			start = now_ms();
+			for (int i=temp-1;i>=0;i--)
+			{
+				initial=deleteAVL(initial,input[i]);
+			}
+			end = now_ms();
+			delete_total += end - start;
+		}
+		printf("AVL, delete in reverse order\nnumber of node:%d,iteration:%d insert time cost:%.3f ms, delete time cost:%.3f ms\n",temp,iter,insert_total,delete_total);
+		fprintf(write,"AVL,%d,Reverse_Order,%d,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,delete_total,delete_total/iter);
+
+		//delete in random order
+		insert_total = 0;
+		delete_total = 0;
+		for (int k=0;k<iter;k++)
+		{
+			Random_order(temp,randomOrder);
+
+			start = now_ms();
+			for (int i=0;i<temp;i++)
+			{
+				initial=insertAVL(initial,input[i]);
+			}
+			end = now_ms();
+			insert_total += end - start;
+
+			start = now_ms();
+			for (int i=0;i<temp;i++)
+			{
+				initial=deleteAVL(initial,randomOrder[i]);
+			}
+			end = now_ms();
+			delete_total += end - start;
+		}
+
+		printf("AVL, delete in random order\nnumber of node:%d,iteration:%d insert time cost:%.3f ms, delete time cost:%.3f ms\n",temp,iter,insert_total,delete_total);
+		fprintf(write,"AVL,%d,Random_Order,%d,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,delete_total,delete_total/iter);
+}
+
+void testRBT(int temp,int iter,int* input,int* randomOrder,FILE* write)
+{
+	PtrToRNode initial=NULL;
+	double insert_total, delete_total;
+	double start, end;
+
+		//delete in same order
+		insert_total = 0;
+		delete_total = 0;
+		for (int k=0;k<iter;k++)
+		{
+			start = now_ms();
+			for (int i=0;i<temp;i++)
+			{
+				initial=insertRBT(initial,input[i]);
+			}
+			end = now_ms();
+			insert_total += end - start;
+
+			start = now_ms();
+			for (int i=0;i<temp;i++)
+			{
+				initial=deleteRBT(initial,input[i]);
+			}
+			end = now_ms();
+			delete_total += end - start;
+		}
+		printf("RBT, delete in same order\nnumber of node:%d,iteration:%d insert time cost:%.3f ms, delete time cost:%.3f ms\n",temp,iter,insert_total,delete_total);
+		fprintf(write,"RBT,%d,Same_Order,%d,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,delete_total,delete_total/iter);
+
+		//delete in reverse order
+		insert_total = 0;
+		delete_total = 0;
+		for (int k=0;k<iter;k++)
+		{
+			start = now_ms();
+			for (int i=0;i<temp;i++)
+			{
+				initial=insertRBT(initial,input[i]);
+			}
+			end = now_ms();
+			insert_total += end - start;
+
+			start = now_ms();
+			for (int i=temp-1;i>=0;i--)
+			{
+				initial=deleteRBT(initial,input[i]);
+			}
+			end = now_ms();
+			delete_total += end - start;
+		}
+		printf("RBT, delete in reverse order\nnumber of node:%d,iteration:%d insert time cost:%.3f ms, delete time cost:%.3f ms\n",temp,iter,insert_total,delete_total);
+		fprintf(write,"RBT,%d,Reverse_Order,%d,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,delete_total,delete_total/iter);
+
+		//delete in random order
+		insert_total = 0;
+		delete_total = 0;
+		for (int k=0;k<iter;k++)
+		{
+			Random_order(temp,randomOrder);
+
+			start = now_ms();
+			for (int i=0;i<temp;i++)
+			{
+				initial=insertRBT(initial,input[i]);
+			}
+			end = now_ms();
+			insert_total += end - start;
+
+			start = now_ms();
+			for (int i=0;i<temp;i++)
+			{
+				initial=deleteRBT(initial,randomOrder[i]);
+			}
+			end = now_ms();
+			delete_total += end - start;
+		}
+
+		printf("RBT, delete in random order\nnumber of node:%d,iteration:%d insert time cost:%.3f ms, delete time cost:%.3f ms\n",temp,iter,insert_total,delete_total);
+		fprintf(write,"RBT,%d,Random_Order,%d,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,delete_total,delete_total/iter);
+}
 int main(int argc, char*argv[])
 {
-
-	char* check=argv[1];
+	char* check;
 	int temp=0;
+	int num=argc-4;
+	int* datas=(int*)malloc(sizeof(int)*(num));
 
-	while (*check)
+	for (int i=0;i<num;i++)
 	{
-		temp=temp*10 + *check-'0';
-		check++;
+		check=argv[i+1];
+		while (*check)
+		{
+			temp=temp*10 + *check-'0';
+			check++;
+		}
+		datas[i]=temp;
+		temp=0;
 	}
 
-	check=argv[2];
+	check=argv[num+1];
 	int iter=0;
 
 	while (*check)
@@ -48,136 +218,49 @@ int main(int argc, char*argv[])
 		iter=iter*10 + *check-'0';
 		check++;
 	}
+
+	FILE* write=fopen(argv[num+3],"w");
 	
-	
-	int* input=(int*)malloc(sizeof(int)*(temp));
-	for (int i=0;i<temp;i++)
-		input[i]=i+1;
+	fprintf(write,"Tree_Type,Number_of_Node,Delete_Order,Iteration,Insert_Time_Cost_Total,Insert_Time_Cost_Average,Delete_Time_Cost_Total,Delete_Time_Cost_Average\n");
 
 	srand((unsigned)time(NULL));
-	int* randomOrder=(int*)malloc(sizeof(int)*(temp));
+	int* randomOrder;
 
-	if (strcmp(argv[3],"AVL")==0)
+	int maxN=0;
+	for (int i=0;i<num;i++)
+		if (datas[i]>maxN)
+			maxN=datas[i];
+
+	int* input=(int*)malloc(sizeof(int)*(maxN>0?maxN:1));
+	for (int i=0;i<maxN;i++)
+		input[i]=i+1;
+
+	if (strcmp(argv[num+2],"AVL")==0)
 	{
-		PtrToANode initial=NULL;
-
-		//delete in same order
-		double start = now_ms();
-		for (int k=0;k<iter;k++)
+		for (int i=0;i<num;i++)
 		{
-			for (int i=0;i<temp;i++)
-			{
-				initial=insertAVL(initial,input[i]);
-			}
+			randomOrder=(int*)malloc(sizeof(int)*(datas[i]));
 
-			for (int i=0;i<temp;i++)
-			{
-				initial=deleteAVL(initial,input[i]);
-			}
+			testAVL(datas[i],iter,input,randomOrder,write);
+
+			free(randomOrder);
 		}
-		double end = now_ms();
-		printf("AVL, delete in same order\nnumber of node:%d,iteration:%d time cost:%.3f ms\n",temp,iter,end-start);
-
-		//delete in reverse order
-		start = now_ms();
-		for (int k=0;k<iter;k++)
-		{
-			for (int i=0;i<temp;i++)
-			{
-				initial=insertAVL(initial,input[i]);
-			}
-
-			for (int i=temp-1;i>=0;i--)
-			{
-				initial=deleteAVL(initial,input[i]);
-			}
-		}
-		end = now_ms();
-		printf("AVL, delete in reverse order\nnumber of node:%d,iteration:%d time cost:%.3f ms\n",temp,iter,end-start);
-
-		//delete in random order
-		double total=0;
-		for (int k=0;k<iter;k++)
-		{
-			Random_order(temp,randomOrder);
-			start = now_ms();
-			for (int i=0;i<temp;i++)
-			{
-				initial=insertAVL(initial,input[i]);
-			}
-
-			for (int i=0;i<temp;i++)
-			{
-				initial=deleteAVL(initial,randomOrder[i]);
-			}
-			end = now_ms();
-			total+=end-start;
-		}
-		
-		printf("AVL, delete in random order\nnumber of node:%d,iteration:%d time cost:%.3f ms\n",temp,iter,total);
 	}
 
-	else if (strcmp(argv[3],"RBT")==0)
+	else if (strcmp(argv[num+2],"RBT")==0)
 	{
-		PtrToRNode initial=NULL;
-
-		//delete in same order
-		double start = now_ms();
-		for (int k=0;k<iter;k++)
+		for (int i=0;i<num;i++)
 		{
-			for (int i=0;i<temp;i++)
-			{
-				initial=insertRBT(initial,input[i]);
-			}
+			randomOrder=(int*)malloc(sizeof(int)*(datas[i]));
 
-			for (int i=0;i<temp;i++)
-			{
-				initial=deleteRBT(initial,input[i]);
-			}
+			testRBT(datas[i],iter,input,randomOrder,write);
+
+			free(randomOrder);
 		}
-		double end = now_ms();
-		printf("RBT, delete in same order\nnumber of node:%d,iteration:%d time cost:%.3f ms\n",temp,iter,end-start);
-
-		//delete in reverse order
-		start = now_ms();
-		for (int k=0;k<iter;k++)
-		{
-			for (int i=0;i<temp;i++)
-			{
-				initial=insertRBT(initial,input[i]);
-			}
-
-			for (int i=temp-1;i>=0;i--)
-			{
-				initial=deleteRBT(initial,input[i]);
-			}
-		}
-		end = now_ms();
-		printf("RBT, delete in reverse order\nnumber of node:%d,iteration:%d time cost:%.3f ms\n",temp,iter,end-start);
-
-		//delete in random order
-		double total=0;
-		for (int k=0;k<iter;k++)
-		{
-			Random_order(temp,randomOrder);
-			start = now_ms();
-			for (int i=0;i<temp;i++)
-			{
-				initial=insertRBT(initial,input[i]);
-			}
-
-			for (int i=0;i<temp;i++)
-			{
-				initial=deleteRBT(initial,randomOrder[i]);
-			}
-			end = now_ms();
-			total+=end-start;
-		}
-
-		printf("RBT, delete in random order\nnumber of node:%d,iteration:%d time cost:%.3f ms\n",temp,iter,total);
 	}
 
-	free(randomOrder);
 	free(input);
+	free(datas);
+	fclose(write);
 	return 0;
 }

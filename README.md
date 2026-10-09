@@ -9,8 +9,11 @@
 ├── AVL.h / AVL.c        # AVL 树的实现
 ├── RBT.h / RBT.c        # 红黑树的实现
 ├── main.c               # 基准测试入口
-├── random_generate/
-│   └── test.py          # 生成随机删除顺序的脚本
+├── visualie/
+│   └── draw.py          # 绘制实验图像
+|   └── AVL.csv / RBT.csv#AVL、RBT原始实验数据
+|   └── AVL_combined.html     #AVL实验图像，分为线性坐标系以及对数坐标系   
+|   └── RBT_combined.html     #RBT实验图像，分为线性坐标系以及对数坐标系   
 └── main                 # 编译产物（可执行文件）
 ```
 
@@ -56,39 +59,68 @@ gcc -O2 -o main main.c AVL.c RBT.c
 
 > 建议开启 `-O2` 以更真实地反映运行性能；如需调试可加 `-g`。
 
-## 运行
+### 不同操作系统的命令
+
+**Linux / macOS**（使用 gcc）：
 
 ```bash
-./main <结点数量> <迭代次数> <数据结构>
+gcc -O2 -o main main.c AVL.c RBT.c   # 生成可执行文件 main
+```
+
+**Windows（MinGW / MSYS2 / WSL）**：
+
+```bat
+:: MinGW / MSYS2：生成 main.exe，运行时可省略 .exe
+gcc -O2 -o main.exe main.c AVL.c RBT.c
+
+:: 如果使用 MSVC（cl.exe），需手动指定源文件并生成 main.exe
+cl /O2 /Fe:main.exe main.c AVL.c RBT.c
+```
+
+| 操作系统 | 可执行文件 | 打开生成的 HTML 图表 |
+| -------- | ---------- | -------------------- |
+| Linux    | `main`     | `xdg-open visualize/AVL_combined.html` |
+| macOS    | `main`     | `open visualize/AVL_combined.html` |
+| Windows  | `main.exe` | `start visualize\AVL_combined.html` |
+
+## 运行
+
+Linux / macOS：
+
+```bash
+./main <结点数量> <迭代次数> <数据结构> <输出地址>
+```
+
+Windows（PowerShell 需加 `.\`，cmd 可直接写 `main.exe`）：
+
+```powershell
+# PowerShell
+.\main.exe <结点数量> <迭代次数> <数据结构> <输出地址>
+
+# cmd
+main.exe <结点数量> <迭代次数> <数据结构> <输出地址>
 ```
 
 参数说明：
 
 | 参数 | 含义 | 取值 |
 | ---- | ---- | ---- |
-| 结点数量 | 每次构建树的结点个数（数据为 `1..N`） | 正整数 |
+| 结点数量 | 每次构建树的结点个数（数据为 `1..N`），可以写多个 | 正整数 |
 | 迭代次数 | 重复构建 / 销毁的次数 | 正整数 |
 | 数据结构 | 选择被测树 | `AVL` 或 `RBT` |
+| 输出地址 | 程序会将结果以csv的形式输出，此处填写输出结果的地址 | `.csv`文件路径 |
 
 示例：
 
 ```bash
-# 对 AVL 树测试 10000 个结点，重复 100 次
-./main 10000 100 AVL
+# 对 AVL 树测试 10000 个结点，重复 100 次，输出到./visualize/AVL.csv
+./main 10000 100 AVL ./visualize/AVL.csv
 
-# 对红黑树测试 10000 个结点，重复 100 次
-./main 10000 100 RBT
-```
+# 对红黑树测试 10000 个结点，重复 100 次，输出到当前目录中的RBT.csv
+./main 10000 100 RBT ./RBT.csv
 
-输出示例：
-
-```
-AVL, delete in same order
-number of node:10000,iteration:100 time cost:77.070 ms
-AVL, delete in reverse order
-number of node:10000,iteration:100 time cost:71.999 ms
-AVL, delete in random order
-number of node:10000,iteration:100 time cost:228.599 ms
+# 对 AVL 树测试 1000、5000 个结点，重复 10 次，输出到./visualize/AVL.csv
+./main 1000 5000 10 AVL ./visualize/AVL.csv
 ```
 
 > 计时使用 `clock_gettime(CLOCK_MONOTONIC)` 的**毫秒级**单调时钟，不受系统时间调整影响。
@@ -99,8 +131,117 @@ number of node:10000,iteration:100 time cost:228.599 ms
 2. **逆序删除**：按 `N..1` 逆序删除；
 3. **随机删除**：由 C 内置的 Fisher-Yates 洗牌生成的随机排列顺序删除。
 
-> 随机顺序在 `main.c` 中直接生成（`makeRandomOrder`），随机种子为当前系统时间，
+> 每轮迭代中**插入耗时与删除耗时分别独立计时**，因此输出中会同时给出插入和删除的总耗时与平均耗时。
+
+> 随机顺序在 `main.c` 中直接生成（`Random_order`），随机种子为当前系统时间，
 > 不依赖外部脚本。
+
+输出示例：
+
+Terminal
+``` 
+AVL, delete in same order
+number of node:10000,iteration:100 insert time cost:38.500 ms, delete time cost:38.570 ms
+AVL, delete in reverse order
+number of node:10000,iteration:100 insert time cost:37.660 ms, delete time cost:34.339 ms
+AVL, delete in random order
+number of node:10000,iteration:100 insert time cost:36.300 ms, delete time cost:192.299 ms
+```
+.csv文件
+``` 
+Tree_Type,Number_of_Node,Delete_Order,Iteration,Insert_Time_Cost_Total,Insert_Time_Cost_Average,Delete_Time_Cost_Total,Delete_Time_Cost_Average
+AVL,1000,Same_Order,10,0.420000,0.042000,0.274000,0.027400
+```
+
+# 可视化
+本实验的绘图所用的python库有**polars**以及**altair**，请确保你的python环境已安装这两种库。
+
+``` bash
+python visualize/draw.py <原始csv文件路径> <需保存的格式>
+```
+
+> Windows 下如果 `python` 不可用，可改用 `py -3`，如 `py -3 visualize/draw.py visualize/AVL.csv html`。
+
+参数说明：
+
+| 参数 | 含义 | 取值 |
+| ---- | ---- | ---- |
+| 原始csv文件路径 | 原始数据 | `.csv`文件路径 |
+| 需保存的格式 | 保存的格式 | `html png`等 |
+
+示例
+```bash
+# 根据 CSV 生成线性坐标图、双对数坐标图并排组合图，保存为 html：
+
+python visualize/draw.py visualize/AVL.csv html
+```
+
+该命令会生成 `visualize/AVL_combined.html`，左图为线性坐标、右图为对数坐标，
+并在同一张图中对比**插入**与**删除**的平均耗时（不同删除顺序用点形状区分）。
+图表包含标题，并可悬停数据点查看详细数据。
+
+## 快速运行
+
+下面按操作系统分别给出可直接复制粘贴的完整命令（含编译、测试、绘图、打开图表）。
+
+### Linux
+
+```bash
+# 1. 编译
+gcc -O2 -o main main.c AVL.c RBT.c
+
+# 2. 运行基准测试（节点数 1000~500000，迭代 10 次）
+./main 1000 5000 10000 50000 100000 200000 500000 10 AVL visualize/AVL.csv
+./main 1000 5000 10000 50000 100000 200000 500000 10 RBT visualize/RBT.csv
+
+# 3. 生成图表（线性坐标 + 双对数坐标并排组合图）
+python visualize/draw.py visualize/AVL.csv html
+python visualize/draw.py visualize/RBT.csv html
+
+# 4. 用浏览器打开图表
+xdg-open visualize/AVL_combined.html
+xdg-open visualize/RBT_combined.html
+```
+
+### macOS
+
+```bash
+# 1. 编译
+gcc -O2 -o main main.c AVL.c RBT.c
+
+# 2. 运行基准测试（节点数 1000~500000，迭代 10 次）
+./main 1000 5000 10000 50000 100000 200000 500000 10 AVL visualize/AVL.csv
+./main 1000 5000 10000 50000 100000 200000 500000 10 RBT visualize/RBT.csv
+
+# 3. 生成图表（线性坐标 + 双对数坐标并排组合图）
+python3 visualize/draw.py visualize/AVL.csv html
+python3 visualize/draw.py visualize/RBT.csv html
+
+# 4. 用浏览器打开图表
+open visualize/AVL_combined.html
+open visualize/RBT_combined.html
+```
+
+### Windows（PowerShell）
+
+```powershell
+# 1. 编译（需已安装 MinGW/MSYS2 的 gcc）
+gcc -O2 -o main.exe main.c AVL.c RBT.c
+
+# 2. 运行基准测试（节点数 1000~500000，迭代 10 次）
+.\main.exe 1000 5000 10000 50000 100000 200000 500000 10 AVL visualize/AVL.csv
+.\main.exe 1000 5000 10000 50000 100000 200000 500000 10 RBT visualize/RBT.csv
+
+# 3. 生成图表（python 不可用时改用 py -3）
+python visualize/draw.py visualize/AVL.csv html
+python visualize/draw.py visualize/RBT.csv html
+
+# 4. 用浏览器打开图表
+start visualize\AVL_combined.html
+start visualize\RBT_combined.html
+```
+
+> 无论哪种系统，都要在项目根目录下执行这些命令。
 
 ## 复杂度
 
@@ -124,4 +265,3 @@ number of node:10000,iteration:100 time cost:228.599 ms
 - **B树**,
 - **splay树**
 - **普通BST**
-
