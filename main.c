@@ -80,7 +80,7 @@ void testAVL(int temp,int iter,int* input,int* randomOrder,FILE* write)
 			delete_total += end - start;
 		}
 		printf("AVL, delete in reverse order\nnumber of node:%d,iteration:%d insert time cost:%.3f ms, delete time cost:%.3f ms\n",temp,iter,insert_total,delete_total);
-		fprintf(write,"AVL,%d,Reverse_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);fprintf(write,"AVL,%d,Reverse_Order,%d,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,delete_total,delete_total/iter);
+		fprintf(write,"AVL,%d,Reverse_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);
 
 		//delete in random order
 		insert_total = 0;
@@ -107,7 +107,9 @@ void testAVL(int temp,int iter,int* input,int* randomOrder,FILE* write)
 		}
 
 		printf("AVL, delete in random order\nnumber of node:%d,iteration:%d insert time cost:%.3f ms, delete time cost:%.3f ms\n",temp,iter,insert_total,delete_total);
-		fprintf(write,"AVL,%d,Random_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);}
+		fprintf(write,"AVL,%d,Random_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);
+}
+
 
 void testRBT(int temp,int iter,int* input,int* randomOrder,FILE* write)
 {
@@ -137,7 +139,7 @@ void testRBT(int temp,int iter,int* input,int* randomOrder,FILE* write)
 			delete_total += end - start;
 		}
 		printf("RBT, delete in same order\nnumber of node:%d,iteration:%d insert time cost:%.3f ms, delete time cost:%.3f ms\n",temp,iter,insert_total,delete_total);
-		fprintf(write,"AVL,%d,Same_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);
+		fprintf(write,"RBT,%d,Same_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);
 
 		//delete in reverse order
 		insert_total = 0;
@@ -161,7 +163,7 @@ void testRBT(int temp,int iter,int* input,int* randomOrder,FILE* write)
 			delete_total += end - start;
 		}
 		printf("RBT, delete in reverse order\nnumber of node:%d,iteration:%d insert time cost:%.3f ms, delete time cost:%.3f ms\n",temp,iter,insert_total,delete_total);
-		fprintf(write,"AVL,%d,Reverse_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);
+		fprintf(write,"RBT,%d,Reverse_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);
 
 		//delete in random order
 		insert_total = 0;
@@ -188,7 +190,7 @@ void testRBT(int temp,int iter,int* input,int* randomOrder,FILE* write)
 		}
 
 		printf("RBT, delete in random order\nnumber of node:%d,iteration:%d insert time cost:%.3f ms, delete time cost:%.3f ms\n",temp,iter,insert_total,delete_total);
-		fprintf(write,"AVL,%d,Random_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);
+		fprintf(write,"RBT,%d,Random_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);
 }
 int main(int argc, char*argv[])
 {
