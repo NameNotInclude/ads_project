@@ -1,9 +1,8 @@
-\documentclass{ctexart}
-\usepackage{amsmath}
+\documentclass{book}
+\usepackage{ctex}
 \usepackage{graphicx}
-\usepackage{float}
-\usepackage{xcolor}
 \usepackage{listings}
+\usepackage{xcolor}
 \usepackage{geometry}
 \geometry{a4paper, margin=2.2cm}
 
@@ -32,14 +31,278 @@
 \begin{document}
 \maketitle
 
-\section{引言}
+\chapter{引言}
 
 \section{实验环境}
 
-\section{数据结构&算法描述}
+\begin{itemize}
+    \item 编程语言：C
+    \item 编译器：gcc
+\end{itemize}
 
-\section{实验结果}
+\chapter{数据结构\&算法描述}
+本实验当中用到的数据结构有：
+\begin{itemize}
+    \item 二叉搜索树(BST)
+    \item AVL
+    \item 红黑树(RBT)
+    \item 生长树(Splay Tree)
+    \item B+树(BPT)
+\end{itemize}
 
-\section{总结}
+我们将会依次描述其实现方式，给出相应算法的描述。
+
+\section{BST}
+
+\section{AVL}
+AVL使用平衡因子(balance factor)，来维持树的平衡。
+记树T的高度为$H_T$，空树高度为-1。
+每个结点的平衡因子$bf=H_{T->left}-H_{T->right}$。
+对于一棵AVL树，其每个节点的左右子树的高度差小于等于1，
+即$bf \in \{-1,0,1\}$。
+对树的插入删除都可能会破坏这一性质，
+因此，我们需要旋转这种操作来维护这种性质。
+
+\subsection{旋转}
+旋转，分为左旋和右旋两种操作，由于两者是镜面对称的，因此我们在这里以左旋为例。
+\begin{lstlisting}
+function LeftRotate(root)
+    pivot = root->right
+    root->right = pivot->left
+    pivot->left = root
+
+    Update the height and balance factor of root and pivot
+    return pivot
+\end{lstlisting}
+
+右旋与左旋对称；旋转后返回新的子树根。
+旋转操作在接下来几种二叉树当中均会使用，后续就不再赘述了。
+
+\subsection{插入}
+先根据BST的插入方式找到插入位置，然后将新结点插入到该位置。
+插入后如果破坏了AVL树的性质，则需要进行旋转操作来恢复平衡。
+\begin{lstlisting}
+function AVLInsert(node, key)
+    path = empty stack
+    current = node
+
+    while (current != NULL)
+        if (key == current->key)
+            return node
+        Push current onto path
+        if (key < current->key)
+            current = current->left
+        else
+            current = current->right
+
+    child = CreateNode(key)
+    while (path is not empty)
+        current = Pop path
+        Attach child to current on the side containing key
+        Update the height and balance factor of current
+
+        if (current is unbalanced)
+            if (left subtree is higher)
+                if (key > current->left->key)
+                    current->left = LeftRotate(current->left)
+                child = RightRotate(current)
+            else
+                if (key < current->right->key)
+                    current->right = RightRotate(current->right)
+                child = LeftRotate(current)
+        else
+            child = current
+
+    return child
+\end{lstlisting}
+
+\subsection{删除}
+类似的，先根据BST的删除方式找到删除位置，然后将该结点删除。
+相较于插入，删除之后可能需要更多次的旋转以维持平衡。
+\begin{lstlisting}
+function AVLDelete(node, key)
+    path = empty stack
+    current = node
+
+    while (current != NULL and current->key != key)
+        Push current and the direction to the next child onto path
+        if (key < current->key)
+            current = current->left
+        else
+            current = current->right
+
+    if (current == NULL)
+        return node
+
+    if (current has two children)
+        Push current and the right-child direction onto path
+        successor = current->right
+        while (successor->left != NULL)
+            Push successor and the left-child direction onto path
+            successor = successor->left
+        current->key = successor->key
+        child = successor->right
+        Free successor
+    else
+        child = current's non-null child, if any
+        Free current
+
+    while (path is not empty)
+        (current, direction) = Pop path
+        Attach child to current in direction
+        Update the height and balance factor of current
+
+        if (current is unbalanced)
+            if (left subtree is higher)
+                if (current->left balance factor < 0)
+                    current->left = LeftRotate(current->left)
+                child = RightRotate(current)
+            else
+                if (current->right balance factor > 0)
+                    current->right = RightRotate(current->right)
+                child = LeftRotate(current)
+        else
+            child = current
+
+    return child
+\end{lstlisting}
+
+\section{RBT}
+红黑树对每个结点标记颜色（红/黑），其中结点的颜色需满足以下几条性质：
+\begin{itemize}
+    \item 根的颜色为黑色。
+    \item 不能出现连续两个红色结点。
+    \item 每条分路（从根到空结点）的黑色结点数相同。
+    \item 空结点视为黑色。
+\end{itemize}
+
+这个性质保证了最长路径（红黑交替）不超过最短路径（全黑）的两倍。
+
+\subsection{插入}
+这里，我们在每个结点当中保存了其父结点的地址，方便回溯、调整。
+\begin{lstlisting}
+function RBTInsert(T, key)
+    Search for the insertion position as in a binary search tree
+    If key already exists, return T
+    Create a red node new and attach it to its parent
+    If new is the root, color it black and return new
+    while (new is not the root and its parent is red)
+        parent = new->parent
+        grandparent = parent->parent
+        uncle = the other child of grandparent
+
+        if (uncle is red)
+            Color parent and uncle black, and grandparent red
+            new = grandparent
+        else
+            if (parent is the left child of grandparent)
+                if (new is the right child of parent)
+                    new = parent
+                    LeftRotate(parent)
+                Color new's parent black and grandparent red
+                RightRotate(grandparent)
+            else
+                if (new is the left child of parent)
+                    new = parent
+                    RightRotate(parent)
+                Color new's parent black and grandparent red
+                LeftRotate(grandparent)
+            Stop adjusting
+
+    Follow parent pointers to the root and color it black
+    return T
+\end{lstlisting}
+
+\subsection{删除}
+删除时将实际摘除结点的原颜色记录下来。若其为黑色，则通过调整替代结点及其兄弟结点，恢复各条路径的黑高；空结点视为黑色。
+\begin{lstlisting}
+function RBTDelete(T, key)
+    z = Search for key as in a binary search tree
+    if (z == NULL)
+        return T
+
+    y = z
+    xParent = z->parent
+    if (z has at most one child)
+        x = z's non-null child, if any
+        originalColor = z->color
+        Replace z with x; update T if z is the root
+        If x is not NULL, update x->parent
+    else
+        y = findmin(z->right)
+        originalColor = y->color
+        x = y->right
+        if (y->parent == z)
+            xParent = y
+            If x is not NULL, set x->parent = y
+        else
+            xParent = y->parent
+            Replace y with x
+            y->right = z->right
+            y->right->parent = y
+        Replace z with y; update T if z is the root
+        y->left = z->left
+        y->left->parent = y
+        y->color = z->color
+
+    Free z
+
+    if (originalColor == BLACK)
+        // NULL is black; xParent also tracks x when x is NULL
+        while (x != T and x is black)
+            if (xParent == NULL)
+                break
+            if (x is the left child of xParent)
+                w = xParent->right
+            else
+                w = xParent->left
+
+            if (w is red)
+                Color w black and xParent red
+                if (x is the left child)
+                    LeftRotate(xParent)
+                else
+                    RightRotate(xParent)
+                Update T if the root changed
+                Reassign w
+
+            if (w == NULL)
+                x = xParent
+                xParent = x->parent
+                Continue
+            else if (both children of w are black)
+                Color w red
+                x = xParent
+                xParent = x->parent
+            else
+                if (x is the left child)
+                    if (w->right is black)
+                        Color w's left child black and w red
+                        RightRotate(w)
+                        Reassign w
+                    Give w xParent's color; color xParent and w's right child black
+                    LeftRotate(xParent); update T if the root changed
+                else
+                    if (w->left is black)
+                        Color w's right child black and w red
+                        LeftRotate(w)
+                        Reassign w
+                    Give w xParent's color; color xParent and w's left child black
+                    RightRotate(xParent); update T if the root changed
+                x = T
+                Stop adjusting
+
+    If x is not NULL, color it black
+    If T is not NULL, follow parent pointers to the root
+    return T
+\end{lstlisting}
+
+\section{Splay Tree}
+
+\section{BPT}
+
+\chapter{实验结果}
+
+\chapter{总结}
 
 \end{document}

@@ -111,7 +111,6 @@ void testAVL(int temp,int iter,int* input,int* randomOrder,FILE* write)
 		fprintf(write,"AVL,%d,Random_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);
 }
 
-
 void testRBT(int temp,int iter,int* input,int* randomOrder,FILE* write)
 {
 	PtrToRNode initial=NULL;
