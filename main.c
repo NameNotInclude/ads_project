@@ -346,15 +346,7 @@ int main(int argc, char*argv[])
 
 	else if (strcmp(argv[num+2],"BPT")==0)
 	{
-		int order;
-		if (scanf("%d",&order)!=1)
-		{
-			fprintf(stderr,"BPT: failed to read order from stdin\n");
-			free(input);
-			free(datas);
-			fclose(write);
-			return 1;
-		}
+		int order=10;
 
 		for (int i=0;i<num;i++)
 		{

@@ -1,2 +1,8 @@
 /.vscode
 *.json
+document/report.aux
+document/report.fdb_latexmk
+document/report.fls
+document/report.log
+document/report.synctex.gz
+document/report.xdv

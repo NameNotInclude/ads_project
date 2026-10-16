@@ -13,10 +13,13 @@
 ├── visualie/
 │   └── draw.py          # 绘制实验图像
 |   └── AVL.csv / RBT.csv / BPT.csv #AVL、RBT、BPT原始实验数据
-|   └── AVL_combined.html     #AVL实验图像，分为线性坐标系以及对数坐标系   
-|   └── RBT_combined.html     #RBT实验图像，分为线性坐标系以及对数坐标系   
-|   └── BPT_combined.html     #BPT实验图像，分为线性坐标系以及对数坐标系   
-└── main                 # 编译产物（可执行文件）
+|   └── AVL_combined.html/pdf/png     #AVL实验图像，分为线性坐标系以及对数坐标系   
+|   └── RBT_combined.html/pdf/png      #RBT实验图像，分为线性坐标系以及对数坐标系   
+|   └── BPT_combined.html/pdf/png      #BPT实验图像，分为线性坐标系以及对数坐标系   
+├── document/
+│   └── report.tex        # 实验报告latex源码
+|   └── report.pdf        # 实验报告
+└── main                  # 编译产物（可执行文件）
 ```
 
 ## 数据结构
@@ -78,8 +81,8 @@ typedef struct
 
 - 采用**迭代**的方式实现插入与删除，手动维护一个栈。
 - 插入：处理结点分裂，以及继续向上传递。
-- 删除：处理向兄弟节点借值，以及节点合并
-- B+树的`order`可以由输入决定
+- 删除：处理向兄弟节点借值，以及节点合并。
+- B+树的`order`在`main.c`文件当中写定，可以在当中修改。
 
 
 ## 编译
@@ -120,7 +123,6 @@ Linux / macOS：
 
 ```bash
 ./main <结点数量> <迭代次数> <数据结构> <输出地址>
-# <BPT的order>
 ```
 
 Windows（PowerShell 需加 `.\`，cmd 可直接写 `main.exe`）：
@@ -128,11 +130,9 @@ Windows（PowerShell 需加 `.\`，cmd 可直接写 `main.exe`）：
 ```powershell
 # PowerShell
 .\main.exe <结点数量> <迭代次数> <数据结构> <输出地址>
-# <BPT的order>
 
 # cmd
 main.exe <结点数量> <迭代次数> <数据结构> <输出地址>
-# <BPT的order>
 ```
 
 参数说明：
@@ -143,7 +143,6 @@ main.exe <结点数量> <迭代次数> <数据结构> <输出地址>
 | 迭代次数 | 重复构建 / 销毁的次数 | 正整数 |
 | 数据结构 | 选择被测树 | `AVL` 或 `RBT` |
 | 输出地址 | 程序会将结果以csv的形式输出，此处填写输出结果的地址 | `.csv`文件路径 |
-| order | BPT的order | 正整数，>=2 |
 
 示例：
 
@@ -159,7 +158,6 @@ main.exe <结点数量> <迭代次数> <数据结构> <输出地址>
 
 # 对 BPT 树测试 1000、5000 个结点，重复 10 次，order为10，输出到./visualize/BPT.csv
 ./main 1000 5000 10 BPT ./visualize/BPT.csv
-10
 ```
 
 > 计时使用 `clock_gettime(CLOCK_MONOTONIC)` 的**毫秒级**单调时钟，不受系统时间调整影响。
@@ -233,7 +231,6 @@ gcc -O2 -o main main.c AVL.c RBT.c B+.c
 ./main 1000 5000 10000 50000 100000 200000 500000 10 AVL visualize/AVL.csv
 ./main 1000 5000 10000 50000 100000 200000 500000 10 RBT visualize/RBT.csv
 ./main 1000 5000 10000 50000 100000 200000 500000 10 BPT visualize/BPT.csv
-10
 
 # 3. 生成图表（线性坐标 + 双对数坐标并排组合图）
 python visualize/draw.py visualize/AVL.csv html
@@ -256,7 +253,6 @@ gcc -O2 -o main main.c AVL.c RBT.c B+.c
 ./main 1000 5000 10000 50000 100000 200000 500000 10 AVL visualize/AVL.csv
 ./main 1000 5000 10000 50000 100000 200000 500000 10 RBT visualize/RBT.csv
 ./main 1000 5000 10000 50000 100000 200000 500000 10 BPT visualize/BPT.csv
-10
 
 # 3. 生成图表（线性坐标 + 双对数坐标并排组合图）
 python3 visualize/draw.py visualize/AVL.csv html
@@ -279,7 +275,6 @@ gcc -O2 -o main.exe main.c AVL.c RBT.c B+.c
 .\main.exe 1000 5000 10000 50000 100000 200000 500000 10 AVL visualize/AVL.csv
 .\main.exe 1000 5000 10000 50000 100000 200000 500000 10 RBT visualize/RBT.csv
 .\main.exe 1000 5000 10000 50000 100000 200000 500000 10 BPT visualize/BPT.csv
-10
 
 # 3. 生成图表（python 不可用时改用 py -3）
 python visualize/draw.py visualize/AVL.csv html
