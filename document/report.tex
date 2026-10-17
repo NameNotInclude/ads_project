@@ -50,9 +50,9 @@
     \item B+树(BPT)
 \end{itemize}
 
-我们将会依次描述其实现方式，给出相应算法的描述。
+我们将会依次描述其实现方式，给出相应算法的描述（伪代码）。
 
-\section{BST}
+\section{二叉搜索树}
 
 \section{AVL}
 AVL使用平衡因子(balance factor)，来维持树的平衡。
@@ -86,14 +86,8 @@ function AVLInsert(node, key)
     path = empty stack
     current = node
 
-    while (current != NULL)
-        if (key == current->key)
-            return node
-        Push current onto path
-        if (key < current->key)
-            current = current->left
-        else
-            current = current->right
+    Search for the insertion position as in a binary search tree
+    and push the node passing by onto the stack
 
     child = CreateNode(key)
     while (path is not empty)
@@ -124,12 +118,8 @@ function AVLDelete(node, key)
     path = empty stack
     current = node
 
-    while (current != NULL and current->key != key)
-        Push current and the direction to the next child onto path
-        if (key < current->key)
-            current = current->left
-        else
-            current = current->right
+    Search for the deletion position as in a binary search tree
+    and push the node passing by onto the stack
 
     if (current == NULL)
         return node
@@ -167,7 +157,7 @@ function AVLDelete(node, key)
     return child
 \end{lstlisting}
 
-\section{RBT}
+\section{红黑树}
 红黑树对每个结点标记颜色（红/黑），其中结点的颜色需满足以下几条性质：
 \begin{itemize}
     \item 根的颜色为黑色。
@@ -297,10 +287,88 @@ function RBTDelete(T, key)
     return T
 \end{lstlisting}
 
-\section{Splay Tree}
+\section{伸展树}
 
-\section{BPT}
+\section{B+树}
+与其他的树不同的是，B+树是一种多叉的搜索树，
+所有的数据存储在叶子结点上，每个叶子结点的高度相同，同时其叶子结点之间通过链表相连，方便范围查询。
+其多叉的性质使得B+树在磁盘存储上有更好的性能，可以显著减少磁盘I/O次数。
+对于一棵order为M的B+树，其每个结点最多有M个子结点，至少有$\lceil M/2 \rceil$个子结点。
+在实现方式上，我们使用结点的数组来存储其子结点的指针，同时使用一个数组来存储其关键字。
 
+数据结构体定义如下：
+\begin{lstlisting}
+typedef struct Bn
+{
+    int leaf; //判断是否为叶节点，便于分配链表指针
+    int* data; //关键字数组
+    int num; //当前关键字个数
+
+    struct Bn** children; //子结点指针数组
+    struct Bn* next; //叶子结点的链表指针，指向下一个叶子结点
+    struct Bn* prev; //叶子结点的链表指针，指向上一个叶子结点
+}BNode;
+\end{lstlisting}
+
+插入
+\begin{lstlisting}
+//树order为M
+function insertBPT(T,key)
+    path = empty stack
+    Search for the insertion position as in a search tree
+    and push the node passing by onto the stack
+
+    I = key
+    C1 = NULL
+    C2 = NULL
+    while (True)
+        if (path is empty)
+            root = newNode()
+            root->data[0] = I
+            root->children[0] = C1
+            root->children[1] = C2
+            if (C1 != NULL && C2 != NULL)
+                root->leaf = true
+            l=else
+                root->leaf = false
+            T = root
+            break
+
+        current = Pop path
+
+        insert I into current's data array
+
+        if (C1 != NULL && C2 !=NULL)
+            insert C1&C2 into current's children array in the corresponding position
+
+        if (current->num > M)
+            split current into two node: A & B
+
+            if (current is leaf)     
+                A->next = B 
+                B->prev = A 
+                if (current->prev != NULL)
+                    current->prev->next = A 
+                else 
+                    update the ptr pointing to the head of the linked list
+                B->next = current->next
+
+            free(current)
+
+            I = the first key of B 
+            C1 = A
+            C2 = B
+
+        else
+            break
+
+    return T
+\end{lstlisting}
+
+删除
+\begin{lstlisting}
+
+\end{lstlisting}
 \chapter{实验结果}
 
 \chapter{总结}
