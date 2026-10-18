@@ -53,6 +53,7 @@ PtrToRNode LeftRotR(PtrToRNode RBT)
 
 PtrToRNode insertRBT(PtrToRNode RBT,int key)
 {
+    //插入结点，按照BST的规则
     PtrToRNode curr=RBT,prev=NULL;
     while (curr)
     {
@@ -91,25 +92,25 @@ PtrToRNode insertRBT(PtrToRNode RBT,int key)
     else
         father->left=newnode;
 
-    // 红黑树调整：父亲是红色时才有冲突
+    //父亲是红色
     while (father!=NULL && father->color==RED)
     {
         grandfather=father->parent;
 
-        // 父亲是根，直接涂黑
+        //父亲是根，直接涂黑
         if (grandfather==NULL)
         {
             father->color=BLACK;
             break;
         }
 
-        // 找叔叔
+        //找叔叔
         if (grandfather->left==father)
             uncle=grandfather->right;
         else
             uncle=grandfather->left;
 
-        // 情况一：叔叔是红色 —— 只变色，冲突向上传递
+        //情况一：叔叔是红色 —— 只变色，冲突向上传递
         if (IS_RED(uncle))
         {
             father->color=BLACK;
@@ -119,7 +120,7 @@ PtrToRNode insertRBT(PtrToRNode RBT,int key)
             newnode=grandfather;
             father=newnode->parent;
         }
-        // 情况二：叔叔是黑色 —— 旋转
+        //情况二：叔叔是黑色 —— 旋转
         else
         {
             if (grandfather->left==father)
@@ -153,7 +154,7 @@ PtrToRNode insertRBT(PtrToRNode RBT,int key)
         }
     }
 
-    // 回到整棵树的根，并保证根是黑色
+    //回到整棵树的根，并保证根是黑色
     while (RBT!=NULL && RBT->parent!=NULL)
         RBT=RBT->parent;
     RBT->color=BLACK;
@@ -256,7 +257,8 @@ static PtrToRNode deleteFixup(PtrToRNode RBT, PtrToRNode x, PtrToRNode parent)
         }
         else
         {
-            PtrToRNode w = parent->left;    // 兄弟结点
+            // 兄弟结点
+            PtrToRNode w = parent->left;    
 
             if (w == NULL)
             {
@@ -321,7 +323,7 @@ static PtrToRNode deleteFixup(PtrToRNode RBT, PtrToRNode x, PtrToRNode parent)
 
 PtrToRNode deleteRBT(PtrToRNode RBT, int key)
 {
-    // 先找到要删除的结点 z
+    //先找到要删除的结点 z
     PtrToRNode z = RBT;
     while (z != NULL)
     {
@@ -333,10 +335,12 @@ PtrToRNode deleteRBT(PtrToRNode RBT, int key)
             break;
     }
 
-    if (z == NULL)          // 不存在，原树不变
+    // 不存在，原树不变
+    if (z == NULL)          
         return RBT;
 
-    PtrToRNode y = z;                        // 真正被摘除的结点
+    // 真正被摘除的结点
+    PtrToRNode y = z;                        
     int y_original_color = y->color;
     PtrToRNode x;                            // 接替 y 的结点（可能为 NULL）
     PtrToRNode xParent;                      // x 的父亲

@@ -5,6 +5,8 @@
 #include "AVL.h"
 #include "RBT.h"
 #include "B+.h"
+#include "BST.h"
+#include "Splay.h"
 
 /* 用 Fisher-Yates 洗牌生成 1..n 的一个随机排列 */
 static void Random_order(int n, int* order)
@@ -275,6 +277,170 @@ void testBPT(int temp,int iter,int* input,int* randomOrder,FILE* write,int order
 		fprintf(write,"BPT,%d,Random_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);
 }
 
+void testBST(int temp,int iter,int* input,int* randomOrder,FILE* write)
+{
+	PtrToBSTNode initial=NULL;
+	double insert_total, delete_total;
+	double start, end;
+
+		//delete in same order
+		insert_total = 0;
+		delete_total = 0;
+		for (int k=0;k<iter;k++)
+		{
+			start = now_ms();
+			for (int i=0;i<temp;i++)
+			{
+				initial=insertBST(initial,input[i]);
+			}
+			end = now_ms();
+			insert_total += end - start;
+
+			start = now_ms();
+			for (int i=0;i<temp;i++)
+			{
+				initial=deleteBST(initial,input[i]);
+			}
+			end = now_ms();
+			delete_total += end - start;
+		}
+		printf("BST, delete in same order\nnumber of node:%d,iteration:%d insert time cost:%.3f ms, delete time cost:%.3f ms\n",temp,iter,insert_total,delete_total);
+		fprintf(write,"BST,%d,Same_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);
+
+		//delete in reverse order
+		insert_total = 0;
+		delete_total = 0;
+		for (int k=0;k<iter;k++)
+		{
+			start = now_ms();
+			for (int i=0;i<temp;i++)
+			{
+				initial=insertBST(initial,input[i]);
+			}
+			end = now_ms();
+			insert_total += end - start;
+
+			start = now_ms();
+			for (int i=temp-1;i>=0;i--)
+			{
+				initial=deleteBST(initial,input[i]);
+			}
+			end = now_ms();
+			delete_total += end - start;
+		}
+		printf("BST, delete in reverse order\nnumber of node:%d,iteration:%d insert time cost:%.3f ms, delete time cost:%.3f ms\n",temp,iter,insert_total,delete_total);
+		fprintf(write,"BST,%d,Reverse_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);
+
+		//delete in random order
+		insert_total = 0;
+		delete_total = 0;
+		for (int k=0;k<iter;k++)
+		{
+			Random_order(temp,randomOrder);
+
+			start = now_ms();
+			for (int i=0;i<temp;i++)
+			{
+				initial=insertBST(initial,input[i]);
+			}
+			end = now_ms();
+			insert_total += end - start;
+
+			start = now_ms();
+			for (int i=0;i<temp;i++)
+			{
+				initial=deleteBST(initial,randomOrder[i]);
+			}
+			end = now_ms();
+			delete_total += end - start;
+		}
+
+		printf("BST, delete in random order\nnumber of node:%d,iteration:%d insert time cost:%.3f ms, delete time cost:%.3f ms\n",temp,iter,insert_total,delete_total);
+		fprintf(write,"BST,%d,Random_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);
+}
+
+void testSplay(int temp,int iter,int* input,int* randomOrder,FILE* write)
+{
+	PtrToSplayNode initial=NULL;
+	double insert_total, delete_total;
+	double start, end;
+
+		//delete in same order
+		insert_total = 0;
+		delete_total = 0;
+		for (int k=0;k<iter;k++)
+		{
+			start = now_ms();
+			for (int i=0;i<temp;i++)
+			{
+				initial=insertSplay(initial,input[i]);
+			}
+			end = now_ms();
+			insert_total += end - start;
+
+			start = now_ms();
+			for (int i=0;i<temp;i++)
+			{
+				initial=deleteSplay(initial,input[i]);
+			}
+			end = now_ms();
+			delete_total += end - start;
+		}
+		printf("SPLAY, delete in same order\nnumber of node:%d,iteration:%d insert time cost:%.3f ms, delete time cost:%.3f ms\n",temp,iter,insert_total,delete_total);
+		fprintf(write,"SPLAY,%d,Same_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);
+
+		//delete in reverse order
+		insert_total = 0;
+		delete_total = 0;
+		for (int k=0;k<iter;k++)
+		{
+			start = now_ms();
+			for (int i=0;i<temp;i++)
+			{
+				initial=insertSplay(initial,input[i]);
+			}
+			end = now_ms();
+			insert_total += end - start;
+
+			start = now_ms();
+			for (int i=temp-1;i>=0;i--)
+			{
+				initial=deleteSplay(initial,input[i]);
+			}
+			end = now_ms();
+			delete_total += end - start;
+		}
+		printf("SPLAY, delete in reverse order\nnumber of node:%d,iteration:%d insert time cost:%.3f ms, delete time cost:%.3f ms\n",temp,iter,insert_total,delete_total);
+		fprintf(write,"SPLAY,%d,Reverse_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);
+
+		//delete in random order
+		insert_total = 0;
+		delete_total = 0;
+		for (int k=0;k<iter;k++)
+		{
+			Random_order(temp,randomOrder);
+
+			start = now_ms();
+			for (int i=0;i<temp;i++)
+			{
+				initial=insertSplay(initial,input[i]);
+			}
+			end = now_ms();
+			insert_total += end - start;
+
+			start = now_ms();
+			for (int i=0;i<temp;i++)
+			{
+				initial=deleteSplay(initial,randomOrder[i]);
+			}
+			end = now_ms();
+			delete_total += end - start;
+		}
+
+		printf("SPLAY, delete in random order\nnumber of node:%d,iteration:%d insert time cost:%.3f ms, delete time cost:%.3f ms\n",temp,iter,insert_total,delete_total);
+		fprintf(write,"SPLAY,%d,Random_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);
+}
+
 int main(int argc, char*argv[])
 {
 	char* check;
@@ -352,6 +518,30 @@ int main(int argc, char*argv[])
 			randomOrder=(int*)malloc(sizeof(int)*(datas[i]));
 
 			testBPT(datas[i],iter,input,randomOrder,write,order);
+
+			free(randomOrder);
+		}
+	}
+
+	else if (strcmp(argv[num+2],"BST")==0)
+	{
+		for (int i=0;i<num;i++)
+		{
+			randomOrder=(int*)malloc(sizeof(int)*(datas[i]));
+
+			testBST(datas[i],iter,input,randomOrder,write);
+
+			free(randomOrder);
+		}
+	}
+
+	else if (strcmp(argv[num+2],"SPLAY")==0 || strcmp(argv[num+2],"SPT")==0)
+	{
+		for (int i=0;i<num;i++)
+		{
+			randomOrder=(int*)malloc(sizeof(int)*(datas[i]));
+
+			testSplay(datas[i],iter,input,randomOrder,write);
 
 			free(randomOrder);
 		}
