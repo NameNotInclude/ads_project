@@ -49,6 +49,30 @@
     \item 在算法实现上，我们都使用了迭代的方式，以尽可能控制变量。
 \end{itemize}
 
+\section{仓库架构}
+\begin{lstlisting}
+├── BST.h / BST.c        # 普通二叉搜索树的实现（迭代）
+├── Splay.h / Splay.c    # 伸展树的实现（迭代）
+├── AVL.h / AVL.c        # AVL 树的实现
+├── RBT.h / RBT.c        # 红黑树的实现
+├── B+.h / B+.c          # B+ 树的实现
+├── BST.h / BST.c        # 二叉搜索树的实现
+├── Splay.h / Splay.c    # Splay树的实现
+├── main.c               # 基准测试入口
+├── visualie/
+│   └── draw.py          # 绘制实验图像
+|   └── BST.csv / AVL.csv / RBT.csv / BPT.csv / SPLAY.csv #BST、AVL、RBT、BPT、SPLAY原始实验数据
+|   └── AVL_combined.pdf/html    #AVL实验图像，分为线性坐标系以及对数坐标系   
+|   └── RBT_combined.pdf/html      #RBT实验图像，分为线性坐标系以及对数坐标系   
+|   └── BPT_combined.pdf/html     #BPT实验图像，分为线性坐标系以及对数坐标系   
+|   └── BST_combined.pdf/html     #BST实验图像，分为线性坐标系以及对数坐标系  
+|   └── SPLAY_combined.html/html     #Splay Tree实验图像，分为线性坐标系以及对数坐标系  
+├── document/
+│   └── report.tex        # 实验报告latex源码
+|   └── report.pdf        # 实验报告
+└── main                  # 编译产物（可执行文件）
+\end{lstlisting}
+
 \chapter{数据结构\&算法描述}
 本实验当中用到的数据结构有：
 \begin{itemize}
@@ -71,27 +95,29 @@ BST 维护左子树键值小于根、右子树键值大于根的性质。
 function insertBST(T,key)
     current = T
 
+    // 空树时，新结点直接成为根
     if (current == NULL)
         return newNode(key)
 
+    // 按键值大小沿树向下查找插入位置
     while (True)
         if (key < current->data)
+            // 找到空左孩子后插入；否则继续向左搜索
             if (current->left == NULL)
                 current->left = newNode(key)
                 break
             current = current->left
             
         else if (key > current->data)
+            // 找到空右孩子后插入；否则继续向右搜索
             if (current->left == NULL)
                 current->left = newNode(key)
                 break
             current = current->left
         
-        else 
+        else
+            // 键值已存在，不重复插入
             break
-
-    
-
 \end{lstlisting}
 
 删除
@@ -100,9 +126,11 @@ function deletionBST(T,key)
     parent = NULL
     current = T
 
+    // 空树无需删除
     if (T == NULL)
         return T
 
+    // 查找目标结点，同时记录其父结点以便后续摘除
     while (current != NULL and current->val != key)
         parent = current
         if (key < current->val)
@@ -110,9 +138,11 @@ function deletionBST(T,key)
         else
             current = current->right
 
+    // 未找到目标键，树保持不变
     if (current == NULL)
         return T
 
+    // 双孩子结点用右子树中的最小结点替换
     if (current has two non-NULL children)
         successorParent = current
         successor = current->right
@@ -123,6 +153,7 @@ function deletionBST(T,key)
         parent = successorParent
         current = successor
 
+    // 至多一个孩子：让父结点直接接上该孩子
     child = the non-NULL child of current, if any
     if (parent == NULL)
         T = child
@@ -148,10 +179,12 @@ AVL使用平衡因子(balance factor)，来维持树的平衡。
 旋转，分为左旋和右旋两种操作，由于两者是镜面对称的，因此我们在这里以左旋为例。
 \begin{lstlisting}
 function LeftRotate(root)
+    // 将右孩子提升为新根，并把其左子树转接给原根
     pivot = root->right
     root->right = pivot->left
     pivot->left = root
 
+    // 子树结构改变后，先更新较低结点再更新新根
     Update the height and balance factor of root and pivot
     return pivot
 \end{lstlisting}
@@ -164,6 +197,7 @@ function LeftRotate(root)
 插入后如果破坏了AVL树的性质，则需要进行旋转操作来恢复平衡。
 \begin{lstlisting}
 function AVLInsert(node, key)
+    // 保存搜索路径，便于插入后自底向上更新和再平衡
     path = empty stack
     current = node
 
@@ -173,10 +207,12 @@ function AVLInsert(node, key)
     child = CreateNode(key)
     while (path is not empty)
         current = Pop path
+        // 将已处理的子树接回当前结点，再更新其平衡信息
         Attach child to current on the side containing key
         Update the height and balance factor of current
 
         if (current is unbalanced)
+            // 先处理内侧子树旋转，形成单旋可修复的形态
             if (left subtree is higher)
                 if (key > current->left->key)
                     current->left = LeftRotate(current->left)
@@ -196,6 +232,7 @@ function AVLInsert(node, key)
 相较于插入，删除之后可能需要更多次的旋转以维持平衡。
 \begin{lstlisting}
 function AVLDelete(node, key)
+    // 保存搜索路径及方向，供删除后逐层接回子树
     path = empty stack
     current = node
 
@@ -206,6 +243,7 @@ function AVLDelete(node, key)
         return node
 
     if (current has two children)
+        // 用后继替换目标结点，实际摘除后继并从其位置开始回溯
         Push current and the right-child direction onto path
         successor = current->right
         while (successor->left != NULL)
@@ -220,10 +258,12 @@ function AVLDelete(node, key)
 
     while (path is not empty)
         (current, direction) = Pop path
+        // 接回删除后的子树，并向根方向更新高度和平衡因子
         Attach child to current in direction
         Update the height and balance factor of current
 
         if (current is unbalanced)
+            // 根据较高子树的平衡因子选择单旋或先子树后根的双旋
             if (left subtree is higher)
                 if (current->left balance factor < 0)
                     current->left = LeftRotate(current->left)
@@ -253,19 +293,23 @@ function AVLDelete(node, key)
 这里，我们在每个结点当中保存了其父结点的地址，方便回溯、调整。
 \begin{lstlisting}
 function RBTInsert(T, key)
+    // 先按 BST 规则定位插入位置；新结点初始为红色
     Search for the insertion position as in a binary search tree
     If key already exists, return T
     Create a red node new and attach it to its parent
     If new is the root, color it black and return new
+    // 仅当父结点为红色时，才需要修复连续红结点
     while (new is not the root and its parent is red)
         parent = new->parent
         grandparent = parent->parent
         uncle = the other child of grandparent
 
         if (uncle is red)
+            // 叔结点为红：向上调整冲突，将修复范围提升到祖父结点
             Color parent and uncle black, and grandparent red
             new = grandparent
         else
+            // 叔结点为黑：通过旋转和重新着色消除局部红红冲突
             if (parent is the left child of grandparent)
                 if (new is the right child of parent)
                     new = parent
@@ -288,6 +332,7 @@ function RBTInsert(T, key)
 删除时将实际摘除结点的原颜色记录下来。若其为黑色，则通过调整替代结点及其兄弟结点，恢复各条路径的黑高；空结点视为黑色。
 \begin{lstlisting}
 function RBTDelete(T, key)
+    // y 是实际被移出原位置的结点；修复依据其原始颜色
     z = Search for key as in a binary search tree
     if (z == NULL)
         return T
@@ -295,11 +340,13 @@ function RBTDelete(T, key)
     y = z
     xParent = z->parent
     if (z has at most one child)
+        // 用唯一孩子（或 NULL）替换目标结点
         x = z's non-NULL child, if any
         originalColor = z->color
         Replace z with x; update T if z is the root
         If x is not NULL, update x->parent
     else
+        // 双孩子时移植后继；x 是后继原位置留下的替代结点
         y = findmin(z->right)
         originalColor = y->color
         x = y->right
@@ -319,7 +366,7 @@ function RBTDelete(T, key)
     Free z
 
     if (originalColor == BLACK)
-        // NULL is black; xParent also tracks x when x is NULL
+        // 黑结点被移除会造成黑高缺失，逐层借色或旋转修复
         while (x != T and x is black)
             if (xParent == NULL)
                 break
@@ -329,6 +376,7 @@ function RBTDelete(T, key)
                 w = xParent->left
 
             if (w is red)
+                // 先将红兄弟转换成黑兄弟，归约到后续情形
                 Color w black and xParent red
                 if (x is the left child)
                     LeftRotate(xParent)
@@ -338,16 +386,20 @@ function RBTDelete(T, key)
                 Reassign w
 
             if (w == NULL)
+                // 没有兄弟可借色，将缺失向父结点方向上移
                 x = xParent
                 xParent = x->parent
                 Continue
             else if (both children of w are black)
+                // 兄弟两侧均为黑：兄弟染红并将双黑向上传递
                 Color w red
                 x = xParent
                 xParent = x->parent
             else
+                // 兄弟远侧为红时旋转并重新着色，完成修复
                 if (x is the left child)
                     if (w->right is black)
+                        // 先将近侧红孩子转成远侧红孩子
                         Color w's left child black and w red
                         RightRotate(w)
                         Reassign w
@@ -382,6 +434,7 @@ function splay(T, key)
     if (T == NULL)
         return NULL
 
+    // 临时头结点分别串接访问路径左侧和右侧的结点
     header.left = NULL
     header.right = NULL
     leftTree = header
@@ -393,9 +446,11 @@ function splay(T, key)
             if (root->left == NULL)
                 break
             if (key < root->left->val)
+                // 连续向左：先右旋，执行 zig-zig
                 root = RightRotate(root)
                 if (root->left == NULL)
                     break
+            // 当前根归入右侧路径，继续在其左子树中查找
             rightTree->left = root
             rightTree = root
             root = root->left
@@ -403,15 +458,18 @@ function splay(T, key)
             if (root->right == NULL)
                 break
             if (key > root->right->val)
+                // 连续向右：先左旋，执行镜像的 zig-zig
                 root = LeftRotate(root)
                 if (root->right == NULL)
                     break
+            // 当前根归入左侧路径，继续在其右子树中查找
             leftTree->right = root
             leftTree = root
             root = root->right
         else
             break
 
+    // 将两侧临时链与最终根的子树重新拼接
     leftTree->right = root->left
     rightTree->left = root->right
     root->left = header.right
@@ -426,6 +484,7 @@ function insertSplay(T, key)
     if (T == NULL)
         return newNode(key)
 
+    // 伸展后，若键不存在，根即为新键应插入位置的一侧边界
     T = splay(T, key)
     if (T->val == key)
         return T
@@ -433,10 +492,12 @@ function insertSplay(T, key)
     node = newNode(key)
 
     if (key < T->val)
+        // 新结点成为根：接管原根的左子树，原根成为其右孩子
         node->left = T->left
         node->right = T
         T->left = NULL
     else
+        // 镜像情况：接管原根的右子树，原根成为其左孩子
         node->right = T->right
         node->left = T
         T->right = NULL
@@ -455,9 +516,11 @@ function delete(root, key):
     if (root.key != key)              // 不存在
         return root
 
+    // 左子树为空时，右子树直接成为新根
     if (root.left == NULL)
         newRoot = root.right
     else
+        // 将左子树最大结点伸展到根，再把原右子树接回
         newRoot = splay(root.left, key)   // key 在左子树中最大
         newRoot.right = root.right        // 此时 newRoot.right 必为 NULL
     return newRoot
@@ -488,15 +551,18 @@ typedef struct Bn
 \begin{lstlisting}
 //树order为M
 function insertBPT(T,key)
+    // 搜索路径用于在叶子分裂后逐层向父结点插入分隔键
     path = empty stack
     Search for the insertion position as in a search tree
     and push the node passing by onto the stack
 
     I = key
+    // C1、C2 表示待插入分隔键两侧的子树；叶子插入时均为空
     C1 = NULL
     C2 = NULL
     while (True)
         if (path is empty)
+            // 分裂一路传播到根时，创建新根
             root = newNode()
             root->data[0] = I
             root->children[0] = C1
@@ -510,15 +576,18 @@ function insertBPT(T,key)
 
         current = Pop path
 
+        // 将待插入键及其子树指针插入当前结点
         insert I into current's data array
 
         if (C1 != NULL && C2 !=NULL)
             insert C1&C2 into current's children array in the corresponding position
 
         if (current->num > M)
+            // 结点溢出则分裂，并把分隔键和两棵子树继续向上推送
             split current into two node: A & B
 
             if (current is leaf)     
+                // 叶子分裂后维护双向叶链表
                 A->next = B 
                 B->prev = A 
                 if (current->prev != NULL)
@@ -529,6 +598,7 @@ function insertBPT(T,key)
 
             free(current)
 
+            // B 的首键作为父结点的分隔键继续插入
             I = the first key of B 
             C1 = A
             C2 = B
@@ -542,6 +612,7 @@ function insertBPT(T,key)
 删除
 \begin{lstlisting}
 function deleteBPT(T,key)
+    // 沿内部结点定位目标叶子，并保存祖先路径以便向上修复
     if (T->root == NULL)
         return NULL
 
@@ -556,23 +627,27 @@ function deleteBPT(T,key)
     if (key is not found)
         return T
 
+    // 从叶子删除目标键；若最小键改变，更新祖先分隔键
     Remove key from current->data and decrease current->num
     if (the deleted key was the first key and current->num > 0)
         Update the affected separator key in its ancestors
 
     minKeys = floor(T->order / 2)
     while (current is not the root and current->num < minKeys)
+        // 自底向上修复下溢：优先向兄弟借键，否则合并
         (parent, childIndex) = Pop path
         left = parent->children[childIndex - 1], if childIndex > 0
         right = parent->children[childIndex + 1], if childIndex < parent->num
 
         if (current is a leaf)
             if (left/right exist and have at least minKeys)
+                // 叶子向相邻兄弟借一个键，并同步父结点分隔键
                 Move left's/right's largest/smallest key to the front of current->data
                 Update parent->data
                 Update affected ancestor separators if the subtree minimum changed
                 break
             else if (left/right exist but have less than minKeys)
+                // 叶子无法借键时合并，并保持叶子链表连续
                 merge current and left/right
                 update linked list pointers
                 update parent->data and parent->children   
@@ -580,17 +655,20 @@ function deleteBPT(T,key)
             
         else
             if (left/right exist and have at least minKeys)
+                // 内部结点借键时，同时旋转父分隔键及对应子树指针
                 Move parent->data[childIndex - 1]/[childIndex] to the front/end of current->data
                 Move left's/right's last/first child to the front/end of current->children
                 Move left's/right's largest/first key up to parent->data[childIndex - 1]/[childIndex]
                 break
             else if (left/right exist but have less than minKeys)
+                // 合并内部结点，并将父分隔键下移到合并后的结点
                 merge current and left/right
                 Remove parent->data[childIndex - 1]/[childIndex] and parent->children[childIndex]/[childIndex + 1]
                 Free current
 
         current = parent
 
+    // 根结点可少于最小占用量；空内部根收缩为唯一孩子
     if (T->root is an internal node and T->root->num == 0)
         oldRoot = T->root
         T->root = oldRoot->children[0]
@@ -612,7 +690,7 @@ function deleteBPT(T,key)
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\textwidth]{BST_combined.pdf}
+    \includegraphics[width=0.6\textwidth]{BST_combined.pdf}
     \caption{BST实验结果}
     \label{fig:bst_results}
 \end{figure}
@@ -623,14 +701,14 @@ function deleteBPT(T,key)
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\textwidth]{AVL_combined.pdf}
+    \includegraphics[width=0.6\textwidth]{AVL_combined.pdf}
     \caption{AVL实验结果}
     \label{fig:avl_results}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\textwidth]{RBT_combined.pdf}
+    \includegraphics[width=0.6\textwidth]{RBT_combined.pdf}
     \caption{RBT实验结果}
     \label{fig:rbt_results}
 \end{figure}
@@ -643,7 +721,7 @@ AVL和RBT都是平衡二叉树，插入和删除的时间复杂度均为$O(\log 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\textwidth]{BPT_combined.pdf}
+    \includegraphics[width=0.6\textwidth]{BPT_combined.pdf}
     \caption{BPT实验结果}
     \label{fig:bpt_results}
 \end{figure}
@@ -654,7 +732,7 @@ BPT是一种多叉平衡树，适用于磁盘存储和大数据量的场景。
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\textwidth]{SPLAY_combined.pdf}
+    \includegraphics[width=0.6\textwidth]{SPLAY_combined.pdf}
     \caption{SPLAY实验结果}
     \label{fig:splay_results}
 \end{figure}

@@ -16,7 +16,7 @@
 ├── main.c               # 基准测试入口
 ├── visualie/
 │   └── draw.py          # 绘制实验图像
-|   └── AVL.csv / RBT.csv / BPT.csv #AVL、RBT、BPT原始实验数据
+└── BST.csv / AVL.csv / RBT.csv / BPT.csv / SPLAY.csv #BST、AVL、RBT、BPT、SPLAY原始实验数据
 |   └── AVL_combined.html/html    #AVL实验图像，分为线性坐标系以及对数坐标系   
 |   └── RBT_combined.html/html      #RBT实验图像，分为线性坐标系以及对数坐标系   
 |   └── BPT_combined.html/html     #BPT实验图像，分为线性坐标系以及对数坐标系   

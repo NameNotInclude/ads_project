@@ -93,7 +93,7 @@ PtrToBSTNode deleteBST(PtrToBSTNode root, int val)
         root = child;
     }
 
-    //接回树种，根据键值的大小关系
+    //接回树中，根据键值的大小关系
     else if (parent->left == curr)
     {
         parent->left = child;
