@@ -49,29 +49,28 @@
     \item 在算法实现上，我们都使用了迭代的方式，以尽可能控制变量。
 \end{itemize}
 
-\section{仓库架构}
+\section{数据参数}
+本实验当中，我们以1~N的顺序插入树中，
+删除时，分别统计顺序删除、逆序删除以及随机删除的用时。
+考虑到使用了随机序列，我们在这里将每次插入、删除执行都若干次（实验中是10次，详情见README.md）
+以减少偶然性。在随机序列生成时，我们使用了Fisher-Yates洗牌，具体的算法流程为：
 \begin{lstlisting}
-├── BST.h / BST.c        # 普通二叉搜索树的实现（迭代）
-├── Splay.h / Splay.c    # 伸展树的实现（迭代）
-├── AVL.h / AVL.c        # AVL 树的实现
-├── RBT.h / RBT.c        # 红黑树的实现
-├── B+.h / B+.c          # B+ 树的实现
-├── BST.h / BST.c        # 二叉搜索树的实现
-├── Splay.h / Splay.c    # Splay树的实现
-├── main.c               # 基准测试入口
-├── visualie/
-│   └── draw.py          # 绘制实验图像
-|   └── BST.csv / AVL.csv / RBT.csv / BPT.csv / SPLAY.csv #BST、AVL、RBT、BPT、SPLAY原始实验数据
-|   └── AVL_combined.pdf/html    #AVL实验图像，分为线性坐标系以及对数坐标系   
-|   └── RBT_combined.pdf/html      #RBT实验图像，分为线性坐标系以及对数坐标系   
-|   └── BPT_combined.pdf/html     #BPT实验图像，分为线性坐标系以及对数坐标系   
-|   └── BST_combined.pdf/html     #BST实验图像，分为线性坐标系以及对数坐标系  
-|   └── SPLAY_combined.html/html     #Splay Tree实验图像，分为线性坐标系以及对数坐标系  
-├── document/
-│   └── report.tex        # 实验报告latex源码
-|   └── report.pdf        # 实验报告
-└── main                  # 编译产物（可执行文件）
+function RandomOrder(n)
+   initial list as (1,2,....,n)
+
+    //索引是0-based
+    for (i=n-1,i>=0;i--)
+        get a random number k
+        l = k % i+1
+        swap list[i] and list[l]
 \end{lstlisting}
+
+假设随机数k的生成是完全随机的。
+对任意(1-n)的随机序列$(a_1,a_2,....,a_n)$，
+从末尾开始，每次选中$a_i$的概率是$\frac{1}{i}$。
+序列生成的概率为$p=\Pi_{i=n}^1 \frac{1}{i}=\frac{1}{n!}$ 。
+这说明这个算法生成的序列是随机的。
+
 
 \chapter{数据结构\&算法描述}
 本实验当中用到的数据结构有：
@@ -337,83 +336,72 @@ function RBTDelete(T, key)
     if (z == NULL)
         return T
 
-    y = z
-    xParent = z->parent
-    if (z has at most one child)
-        // 用唯一孩子（或 NULL）替换目标结点
-        x = z's non-NULL child, if any
-        originalColor = z->color
-        Replace z with x; update T if z is the root
-        If x is not NULL, update x->parent
-    else
-        // 双孩子时移植后继；x 是后继原位置留下的替代结点
+    if (z has two non-NULL children)
         y = findmin(z->right)
-        originalColor = y->color
-        x = y->right
-        if (y->parent == z)
-            xParent = y
-            If x is not NULL, set x->parent = y
-        else
-            xParent = y->parent
-            Replace y with x
-            y->right = z->right
-            y->right->parent = y
-        Replace z with y; update T if z is the root
-        y->left = z->left
-        y->left->parent = y
-        y->color = z->color
+        z->data = y->data
+        z = y
 
+    //删除结点单孩子，替代后变色
+    if (z has one non-NULL child)
+        replace z with its child
+        Color new node red
+        if (z == T) update root
+        return T
+
+    originalColor = z->color
+
+    zparent = z->parent
     Free z
+    z = NULL
 
+    //删除无孩子的黑节点
     if (originalColor == BLACK)
         // 黑结点被移除会造成黑高缺失，逐层借色或旋转修复
-        while (x != T and x is black)
-            if (xParent == NULL)
+        while (true)
+            s = the other child of zparent 
+
+            //双黑遇到根或者是红节点，染黑（这里z为NULL是黑色）
+            if (z is RED or z is root)
+                z->color = BLACK
                 break
-            if (x is the left child of xParent)
-                w = xParent->right
-            else
-                w = xParent->left
 
-            if (w is red)
-                // 先将红兄弟转换成黑兄弟，归约到后续情形
-                Color w black and xParent red
-                if (x is the left child)
-                    LeftRotate(xParent)
-                else
-                    RightRotate(xParent)
-                Update T if the root changed
-                Reassign w
+            //兄弟为黑色
+            if (s->color == BLACK)
+                if (s = zparent->left/right)
+                    //兄弟、侄子、父亲呈LL/RR
+                    //颜色变换：侄子<-兄弟<-父亲<-BLACK
+                    //对应方式旋转，类似于AVL
+                    if (s->left/right ->color == RED)
+                        s->left/right ->color = s->color
+                        s->color = zparent->color 
+                        zparent->color = BLACK
+                        RightRotate/LeftRotate(zparent)
+                        break
 
-            if (w == NULL)
-                // 没有兄弟可借色，将缺失向父结点方向上移
-                x = xParent
-                xParent = x->parent
-                Continue
-            else if (both children of w are black)
-                // 兄弟两侧均为黑：兄弟染红并将双黑向上传递
-                Color w red
-                x = xParent
-                xParent = x->parent
-            else
-                // 兄弟远侧为红时旋转并重新着色，完成修复
-                if (x is the left child)
-                    if (w->right is black)
-                        // 先将近侧红孩子转成远侧红孩子
-                        Color w's left child black and w red
-                        RightRotate(w)
-                        Reassign w
-                    Give w xParent's color; color xParent and w's right child black
-                    LeftRotate(xParent); update T if the root changed
-                else
-                    if (w->left is black)
-                        Color w's right child black and w red
-                        LeftRotate(w)
-                        Reassign w
-                    Give w xParent's color; color xParent and w's left child black
-                    RightRotate(xParent); update T if the root changed
-                x = T
-                Stop adjusting
+                    //兄弟、侄子、父亲呈LR/RL
+                    //颜色变换：侄子<-父亲<-BLACK
+                    //对应方式旋转，类似于AVL
+                    else if (s->right/left ->color == RED)
+                        s->right/left ->color = zparent->color 
+                        zparent->color = BLACK
+                        LeftRotate/RightRotate(s)
+                        RightRotate/LeftRotate(zparent)
+                        break
+
+                    //侄子双黑，兄弟变色，双黑上移
+                    else
+                        s->color = RED 
+                        z = zparent
+                        zparent = z->parent //约定：root的parent为NULL
+                        continue
+        
+            //兄弟红色，兄父变色，朝双黑旋转，继续调整
+            if (s->color == RED)
+                s->color = BLACK
+                zparent->color = RED
+
+                if (z is the left/right child of zparent)
+                    RightRotate/LeftRotate(zparent)
 
     If x is not NULL, color it black
     If T is not NULL, follow parent pointers to the root
@@ -443,24 +431,24 @@ function splay(T, key)
 
     while (True)
         if (key < root->val)
-            if (root->left == NULL)
+            if (root->left is NULL)
                 break
             if (key < root->left->val)
                 // 连续向左：先右旋，执行 zig-zig
                 root = RightRotate(root)
-                if (root->left == NULL)
+                if (root->left is NULL)
                     break
             // 当前根归入右侧路径，继续在其左子树中查找
             rightTree->left = root
             rightTree = root
             root = root->left
         else if (key > root->val)
-            if (root->right == NULL)
+            if (root->right is NULL)
                 break
             if (key > root->right->val)
                 // 连续向右：先左旋，执行镜像的 zig-zig
                 root = LeftRotate(root)
-                if (root->right == NULL)
+                if (root->right is NULL)
                     break
             // 当前根归入左侧路径，继续在其右子树中查找
             leftTree->right = root
@@ -513,7 +501,8 @@ function delete(root, key):
 
     root = splay(root, key)
 
-    if (root.key != key)              // 不存在
+    // 不存在
+    if (root.key != key)              
         return root
 
     // 左子树为空时，右子树直接成为新根
