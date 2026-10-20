@@ -95,11 +95,12 @@ void testAVL(int temp,int iter,int* input,int* randomOrder,FILE* write)
 			start = now_ms();
 			for (int i=0;i<temp;i++)
 			{
-				initial=insertAVL(initial,input[i]);
+				initial=insertAVL(initial,randomOrder[i]);
 			}
 			end = now_ms();
 			insert_total += end - start;
 
+			Random_order(temp,randomOrder);
 			start = now_ms();
 			for (int i=0;i<temp;i++)
 			{
@@ -177,11 +178,12 @@ void testRBT(int temp,int iter,int* input,int* randomOrder,FILE* write)
 			start = now_ms();
 			for (int i=0;i<temp;i++)
 			{
-				initial=insertRBT(initial,input[i]);
+				initial=insertRBT(initial,randomOrder[i]);
 			}
 			end = now_ms();
 			insert_total += end - start;
 
+			Random_order(temp,randomOrder);
 			start = now_ms();
 			for (int i=0;i<temp;i++)
 			{
@@ -259,11 +261,12 @@ void testBPT(int temp,int iter,int* input,int* randomOrder,FILE* write,int order
 			start = now_ms();
 			for (int i=0;i<temp;i++)
 			{
-				init=insertBPT(init,input[i]);
+				init=insertBPT(init,randomOrder[i]);
 			}
 			end = now_ms();
 			insert_total += end - start;
 
+			Random_order(temp,randomOrder);
 			start = now_ms();
 			for (int i=0;i<temp;i++)
 			{
@@ -341,11 +344,12 @@ void testBST(int temp,int iter,int* input,int* randomOrder,FILE* write)
 			start = now_ms();
 			for (int i=0;i<temp;i++)
 			{
-				initial=insertBST(initial,input[i]);
+				initial=insertBST(initial,randomOrder[i]);
 			}
 			end = now_ms();
 			insert_total += end - start;
 
+			Random_order(temp,randomOrder);
 			start = now_ms();
 			for (int i=0;i<temp;i++)
 			{
@@ -423,11 +427,12 @@ void testSplay(int temp,int iter,int* input,int* randomOrder,FILE* write)
 			start = now_ms();
 			for (int i=0;i<temp;i++)
 			{
-				initial=insertSplay(initial,input[i]);
+				initial=insertSplay(initial,randomOrder[i]);
 			}
 			end = now_ms();
 			insert_total += end - start;
 
+			Random_order(temp,randomOrder);
 			start = now_ms();
 			for (int i=0;i<temp;i++)
 			{
