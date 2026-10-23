@@ -282,7 +282,7 @@ gcc -O2 -o main main.c AVL.c RBT.c B+.c BST.c Splay.c
 ./main 1000 5000 10000 50000 100000 200000 500000 10 BPT visualize/BPT.csv
 ./main 1000 5000 10000 50000 100000 200000 500000 10 SPLAY visualize/SPLAY.csv
 # BST 在有序插入时会退化为链表，建议使用较小规模
-./main 1000 5000 10000 50000 10 BST visualize/BST.csv
+./main 1000 5000 10000 50000 100000 200000 500000 1 BST visualize/BST.csv
 
 # 3. 生成图表（线性坐标 + 双对数坐标并排组合图）
 python visualize/draw.py visualize/AVL.csv html
@@ -311,7 +311,7 @@ gcc -O2 -o main main.c AVL.c RBT.c B+.c BST.c Splay.c
 ./main 1000 5000 10000 50000 100000 200000 500000 10 BPT visualize/BPT.csv
 ./main 1000 5000 10000 50000 100000 200000 500000 10 SPLAY visualize/SPLAY.csv
 # BST 在有序插入时会退化为链表，建议使用较小规模
-./main 1000 5000 10000 50000 10 BST visualize/BST.csv
+./main 1000 5000 10000 50000 100000 200000 500000 1 BST visualize/BST.csv
 
 # 3. 生成图表（线性坐标 + 双对数坐标并排组合图）
 python3 visualize/draw.py visualize/AVL.csv html
@@ -340,7 +340,7 @@ gcc -O2 -o main.exe main.c AVL.c RBT.c B+.c BST.c Splay.c
 .\main.exe 1000 5000 10000 50000 100000 200000 500000 10 BPT visualize/BPT.csv
 .\main.exe 1000 5000 10000 50000 100000 200000 500000 10 SPLAY visualize/SPLAY.csv
 # BST 在有序插入时会退化为链表，建议使用较小规模
-.\main.exe 1000 5000 10000 50000 10 BST visualize/BST.csv
+.\main.exe 1000 5000 10000 50000 100000 200000 500000 1 BST visualize/BST.csv
 
 # 3. 生成图表（python 不可用时改用 py -3）
 python visualize/draw.py visualize/AVL.csv html

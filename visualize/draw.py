@@ -1,65 +1,94 @@
 import polars as pl
 import altair as alt
-from pathlib import Path
-import sys
 
-file_name = Path(sys.argv[1])
-output_format = sys.argv[2].lstrip(".")
-df = pl.read_csv(file_name)
+df_bst = pl.read_csv('visualize/csv/BST.csv')
+df_avl = pl.read_csv('visualize/csv/AVL.csv')
+df_rbt = pl.read_csv('visualize/csv/RBT.csv')
+df_splay = pl.read_csv('visualize/csv/SPLAY.csv')
+df_bpt_4 = pl.read_csv('visualize/csv/BPT_4.csv')
+df_bpt_10 = pl.read_csv('visualize/csv/BPT_10.csv')
+df_bpt_20 = pl.read_csv('visualize/csv/BPT_20.csv')
+df_bpt_100 = pl.read_csv('visualize/csv/BPT_100.csv')
 
-# 将插入/删除的平均耗时整理成长表，便于在同一张图里对比
-long_df = df.unpivot(
-    index=["Tree_Type", "Number_of_Node", "Delete_Order", "Iteration"],
-    on=["Insert_Time_Cost_Amortized", "Delete_Time_Cost_Amortized"],
-    variable_name="Operation",
-    value_name="Amortized_Time_Cost",
-).with_columns(
-    pl.col("Operation")
-      .str.replace("_Time_Cost_Amortized", "")
-      .alias("Operation")
-)
+df_bst_asds = df_bst.filter(pl.col('Delete_Order') == 'Same_Order')
+df_avl_asds = df_avl.filter(pl.col('Delete_Order') == 'Same_Order')
+df_rbt_asds = df_rbt.filter(pl.col('Delete_Order') == 'Same_Order')
+df_splay_asds = df_splay.filter(pl.col('Delete_Order') == 'Same_Order')
+df_bpt_4_asds = df_bpt_4.filter(pl.col('Delete_Order') == 'Same_Order')
+df_bpt_10_asds = df_bpt_10.filter(pl.col('Delete_Order') == 'Same_Order')
+df_bpt_20_asds = df_bpt_20.filter(pl.col('Delete_Order') == 'Same_Order')
+df_bpt_100_asds = df_bpt_100.filter(pl.col('Delete_Order') == 'Same_Order')
 
-tooltip = [
-    alt.Tooltip("Tree_Type:N", title="Tree"),
-    alt.Tooltip("Number_of_Node:Q", title="Number of nodes"),
-    alt.Tooltip("Delete_Order:N", title="Delete order"),
-    alt.Tooltip("Operation:N", title="Operation"),
-    alt.Tooltip("Iteration:Q", title="Iterations"),
-    alt.Tooltip("Amortized_Time_Cost:Q", title="Amortized Time Cost", format=".7f"),
-]
 
-base = alt.Chart(long_df).encode(
-    color=alt.Color("Operation:N", title="Operation"),
-    shape=alt.Shape("Delete_Order:N", title="Delete order"),
+df_bst_asdr = df_bst.filter(pl.col('Delete_Order') == 'Reverse_Order')
+df_avl_asdr = df_avl.filter(pl.col('Delete_Order') == 'Reverse_Order')
+df_rbt_asdr = df_rbt.filter(pl.col('Delete_Order') == 'Reverse_Order')
+df_splay_asdr = df_splay.filter(pl.col('Delete_Order') == 'Reverse_Order')
+df_bpt_4_asdr = df_bpt_4.filter(pl.col('Delete_Order') == 'Reverse_Order')
+df_bpt_10_asdr = df_bpt_10.filter(pl.col('Delete_Order') == 'Reverse_Order')
+df_bpt_20_asdr = df_bpt_20.filter(pl.col('Delete_Order') == 'Reverse_Order')
+df_bpt_100_asdr = df_bpt_100.filter(pl.col('Delete_Order') == 'Reverse_Order')
+
+df_bst_ardr = df_bst.filter(pl.col('Delete_Order') == 'Random_Order')
+df_avl_ardr = df_avl.filter(pl.col('Delete_Order') == 'Random_Order')
+df_rbt_ardr = df_rbt.filter(pl.col('Delete_Order') == 'Random_Order')
+df_splay_ardr = df_splay.filter(pl.col('Delete_Order') == 'Random_Order')
+df_bpt_4_ardr = df_bpt_4.filter(pl.col('Delete_Order') == 'Random_Order')
+df_bpt_10_ardr = df_bpt_10.filter(pl.col('Delete_Order') == 'Random_Order')
+df_bpt_20_ardr = df_bpt_20.filter(pl.col('Delete_Order') == 'Random_Order')
+df_bpt_100_ardr = df_bpt_100.filter(pl.col('Delete_Order') == 'Random_Order')
+
+df_asds = pl.concat(
+    [df_splay_asds,df_rbt_asds,df_bpt_4_asds,df_bst_asds,df_avl_asds,df_bpt_10_asds,df_bpt_20_asds,df_bpt_100_asds],
+    how='vertical')
+
+df_asdr = pl.concat(
+    [df_splay_asds,df_rbt_asds,df_bpt_4_asds,df_bpt_10_asds,df_bpt_20_asds,df_bpt_100_asds,df_bst_asds,df_avl_asds],
+    how='vertical')
+
+df_ardr = pl.concat(
+    [df_splay_ardr,df_rbt_ardr,df_bpt_4_ardr,df_bpt_10_ardr,df_bpt_20_ardr,df_bpt_100_ardr,df_bst_ardr,df_avl_ardr],
+    how='vertical')
+print(df_asds,df_asdr,df_ardr)
+
+asds_d = alt.Chart(df_asds).mark_point().encode(
     x="Number_of_Node:Q",
-    y=alt.Y("Amortized_Time_Cost:Q", title="Amortized Time Cost"),
-    tooltip=tooltip
+    y="Delete_Time_Cost_Amortized:Q",
+    color="Tree_Type",
+    tooltip=["Number_of_Node","Delete_Time_Cost_Amortized","Delete_Order","Tree_Type"]
 )
 
-base_chart =  base.mark_point(filled=True)
-
-output_path = file_name.with_suffix(f".{output_format}")
-
-linear_chart = base_chart.properties(title="Linear scale")
-
-log_chart = base_chart.encode(
-    x=alt.X(
-        "Number_of_Node:Q",
-        title="Number of nodes",
-        scale=alt.Scale(type="log")
-    ),
-    y=alt.Y(
-        "Amortized_Time_Cost:Q",
-        title="Amortized Time Cost",
-        scale=alt.Scale(type="linear")
-    )
-).properties(title="Linear-Log scale")
-
-combined_chart = alt.hconcat(
-    linear_chart,
-    log_chart,
-    title=f"{df['Tree_Type'][0]} insert / delete performance"
+asds_i = alt.Chart(df_asds).mark_point().encode(
+    x="Number_of_Node:Q",
+    y="Insert_Time_Cost_Amortized:Q",
+    color="Tree_Type",
+    tooltip=["Number_of_Node","Insert_Time_Cost_Amortized","Tree_Type"]
 )
-combined_chart.save(
-    output_path.with_name(f"{output_path.stem}_combined{output_path.suffix}")
+
+asdr_d = alt.Chart(df_asds).mark_point().encode(
+    x="Number_of_Node:Q",
+    y="Delete_Time_Cost_Amortized:Q",
+    color="Tree_Type",
+    tooltip=["Number_of_Node","Delete_Time_Cost_Amortized","Delete_Order","Tree_Type"]
 )
+
+ardr_i = alt.Chart(df_asds).mark_point().encode(
+    x="Number_of_Node:Q",
+    y="Insert_Time_Cost_Amortized:Q",
+    color="Tree_Type",
+    tooltip=["Number_of_Node","Delete_Time_Cost_Amortized","Delete_Order","Tree_Type"]
+)
+
+ardr_d = alt.Chart(df_asds).mark_point().encode(
+    x="Number_of_Node:Q",
+    y="Delete_Time_Cost_Amortized:Q",
+    color="Tree_Type",
+    tooltip=["Number_of_Node","Delete_Time_Cost_Amortized","Delete_Order","Tree_Type"]
+)
+
+
+asds_i.save('visualize/Increase_insert.pdf')
+asds_d.save('visualize/Same_delete.pdf')
+asdr_d.save('visualize/Reverse_delete.pdf')
+ardr_i.save('visualize/Random_insert.pdf')
+ardr_d.save('visualize/Random_delete.pdf')

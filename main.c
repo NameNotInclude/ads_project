@@ -225,7 +225,7 @@ void testBPT(int temp,int iter,int* input,int* randomOrder,FILE* write,int order
 			delete_total += end - start;
 		}
 		printf("BPT, delete in same order\nnumber of node:%d,iteration:%d insert time cost:%.3f ms, delete time cost:%.3f ms\n",temp,iter,insert_total,delete_total);
-		fprintf(write,"BPT,%d,Same_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);
+		fprintf(write,"BPT_%d,%d,Same_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",order,temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);
 
 		//delete in reverse order
 		insert_total = 0;
@@ -249,7 +249,7 @@ void testBPT(int temp,int iter,int* input,int* randomOrder,FILE* write,int order
 			delete_total += end - start;
 		}
 		printf("BPT, delete in reverse order\nnumber of node:%d,iteration:%d insert time cost:%.3f ms, delete time cost:%.3f ms\n",temp,iter,insert_total,delete_total);
-		fprintf(write,"BPT,%d,Reverse_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);
+		fprintf(write,"BPT_%d,%d,Reverse_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",order,temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);
 
 		//delete in random order
 		insert_total = 0;
@@ -277,7 +277,7 @@ void testBPT(int temp,int iter,int* input,int* randomOrder,FILE* write,int order
 		}
 
 		printf("BPT, delete in random order\nnumber of node:%d,iteration:%d insert time cost:%.3f ms, delete time cost:%.3f ms\n",temp,iter,insert_total,delete_total);
-		fprintf(write,"BPT,%d,Random_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);
+		fprintf(write,"BPT_%d,%d,Random_Order,%d,%lf,%lf,%lf,%lf,%lf,%lf\n",order,temp,iter,insert_total,insert_total/iter,insert_total/iter/temp,delete_total,delete_total/iter,delete_total/iter/temp);
 }
 
 void testBST(int temp,int iter,int* input,int* randomOrder,FILE* write)
