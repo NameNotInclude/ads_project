@@ -6,7 +6,9 @@
 \usepackage{xcolor}
 \usepackage{geometry}
 \usepackage{float}
-\geometry{a4paper, margin=2.2cm}
+\usepackage{subcaption}
+\geometry{a4paper, margin=2cm}
+\setlength{\parskip}{0.5em}
 
 % ===== 代码列表的统一样式 =====
 \lstset{
@@ -44,15 +46,18 @@
 \section{实验环境}
 
 \begin{itemize}
-    \item 编程语言：C
-    \item 编译器：gcc
-    \item 在算法实现上，我们都使用了迭代的方式，以尽可能控制变量。
+    \item 编程语言：C gcc
 \end{itemize}
 
 \section{数据参数}
-本实验当中，我们以1~N的顺序插入树中，
-删除时，分别统计顺序删除、逆序删除以及随机删除的用时。
-考虑到使用了随机序列，我们在这里将每次插入、删除执行都若干次（实验中是10次，详情见README.md）
+本实验当中，我们分别测试以下三种情况：
+\begin{enumerate}
+    \item 先以递增的顺序插入结点，再顺序删除
+    \item 递增的顺序插入结点，再逆序删除
+    \item 随机顺序插入结点，再随机删除
+\end{enumerate}
+
+考虑到使用了随机序列，我们在这里将每次插入、删除执行都若干次（实验中是10次，普通BST是1次，详情见README.md）
 以减少偶然性。在随机序列生成时，我们使用了Fisher-Yates洗牌，具体的算法流程为：
 \begin{lstlisting}
 function RandomOrder(n)
@@ -82,12 +87,11 @@ function RandomOrder(n)
     \item B+树(BPT)
 \end{itemize}
 
-我们将会依次描述其实现方式，给出相应算法的描述（伪代码）。
+我们将会依次描述其实现方式，给出相应算法的描述（伪代码）。具体的算法复杂度，在第四章当中分析。
 
 \section{二叉搜索树}
 BST 维护左子树键值小于根、右子树键值大于根的性质。
 普通 BST 不主动调整树高，有序插入时可能退化为高度为 $N$ 的链。
-删除时通过额外指针记录当前结点的父结点，无需使用栈，额外空间复杂度为 $O(1)$。
 
 插入
 \begin{lstlisting}
@@ -109,10 +113,10 @@ function insertBST(T,key)
             
         else if (key > current->data)
             // 找到空右孩子后插入；否则继续向右搜索
-            if (current->left == NULL)
-                current->left = newNode(key)
+            if (current->right == NULL)
+                current->right = newNode(key)
                 break
-            current = current->left
+            current = current->right
         
         else
             // 键值已存在，不重复插入
@@ -521,6 +525,7 @@ function delete(root, key):
 其多叉的性质使得B+树在磁盘存储上有更好的性能，可以显著减少磁盘I/O次数。
 对于一棵order为M的B+树，其每个结点最多有M个子结点，至少有$\lceil M/2 \rceil$个子结点。
 在实现方式上，我们使用结点的数组来存储其子结点的指针，同时使用一个数组来存储其关键字。
+本实验共使用了order为4、10、20、100的四种B+树。
 
 数据结构体定义如下：
 \begin{lstlisting}
@@ -674,59 +679,157 @@ function deleteBPT(T,key)
 \end{lstlisting}
 
 \chapter{实验结果}
-我们将实验当中各个树用时与数据量的关系作图，分为线性坐标轴与对数坐标轴。
+我们将实验当中各种操作，不同类型的数据结构。
 图表当中的用时是摊还用时，即若干次操作的总用时除以操作的数量。
 
-\begin{figure}[H]
+\section{BST与平衡搜索树的对比}
+对于BST，顺序插入时，树退化为链表，每次插入都需要$O(n)$的时间，
+另外的，对于一个顺序插入形成的退化的二叉树，倒序删除时每次需要$O(n)$。
+而平衡搜索树通过各种手段维护树高，使得操作（或者摊还分析下）的时间复杂度达到$O(logN)$。
+下图给出了普通二叉树与平衡二叉树的在顺序插入与倒序删除时间差距。
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[b]{0.48\linewidth}
     \centering
-    \includegraphics[width=0.6\textwidth]{BST_combined.pdf}
-    \caption{BST实验结果}
-    \label{fig:bst_results}
-\end{figure}
-对于普通BST，当插入数据是有序时，树会退化为链表。
-此时如果按插入顺序删除，每次删除的结点正好在根，这使得删除只需要消耗$O(1)$的时间。
-而若是按逆序删除，则每次删除的结点都在叶子结点，删除需要消耗$O(N)$的时间。
-实验当中顺序删除的用时几乎为零，而逆序删除的用时呈现线性增长。且耗时远大于接下来的几种平衡二叉树。
+    \includegraphics[width=\linewidth]{Increase_insert.pdf}
+    \subcaption{顺序插入的时间对比图}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{Reverse_delete.pdf}
+    \subcaption{倒序删除的时间对比图}
+  \end{minipage}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.6\textwidth]{AVL_combined.pdf}
-    \caption{AVL实验结果}
-    \label{fig:avl_results}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.6\textwidth]{RBT_combined.pdf}
-    \caption{RBT实验结果}
-    \label{fig:rbt_results}
+  \caption{非平衡二叉树与平衡二叉树的对比}
 \end{figure}
 
-AVL和RBT都是平衡二叉树，插入和删除的时间复杂度均为$O(\log N)$。
-这点在实验结果中得到了验证，随着数据量的增加，AVL和RBT的用时呈现对数增长。
-但是AVL的平衡相较于RBT的平衡更加严格，因此AVL的插入和删除操作需要更多的旋转操作，导致其用时略高于RBT。
-这点在我们的实验图像当中得到了体现，AVL的曲线在RBT曲线之上。
-这说明RBT在综合性能上优于AVL，尤其是在插入和删除操作频繁的场景下。
+\section{平衡搜索树的比较}
+在这里，为了方便观察，我们去掉了顺序插入与逆序删除图像当中的BST。
 
-\begin{figure}[H]
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[b]{0.48\linewidth}
     \centering
-    \includegraphics[width=0.6\textwidth]{BPT_combined.pdf}
-    \caption{BPT实验结果}
-    \label{fig:bpt_results}
+    \includegraphics[width=\linewidth]{Increase_insert_without_BST.pdf}
+    \subcaption{顺序插入的时间对比图}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{Random_insert.pdf}
+    \subcaption{随机插入的时间对比图}
+  \end{minipage}
+
+  \caption{插入操作的时间对比图}
+
+  \centering
+  \begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{Same_delete.pdf}
+    \subcaption{顺序删除的时间对比图}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{Reverse_delete_without_BST.pdf}
+    \subcaption{倒序删除的时间对比图}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{Random_delete.pdf}
+    \subcaption{随机删除的时间对比图}
+  \end{minipage}
+
+  \caption{删除操作的时间对比图}
 \end{figure}
 
-BPT是一种多叉平衡树，适用于磁盘存储和大数据量的场景。
-由于BPT的多叉性质，它在插入和删除操作中需要进行更多的节点分裂和合并操作，这使得其在小数据量下的性能不如AVL和RBT。
-然而，随着数据量的增加，BPT的性能优势逐渐显现出来，尤其是在大数据量下，BPT的用时明显低于AVL和RBT。
+\subsection{插入操作}
+对于SPLAY树，在顺序插入时每次的用时几乎是常数。
+这是因为每次插入数据后插入的数据被旋转到根，而因为插入的顺序是递增的，
+根节点是整棵树当中最大的元素。此时再插入新的元素仅需要做一步路径寻找与旋转，耗时为常数。
+而在随机插入时，因为SPLAY并不严格维护树高，每次插入后都需要旋转到根，导致树高可能达到$O(n)$，
+因此随机插入的用时显著高于顺序插入，也显著高于其他的数据结构。
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.6\textwidth]{SPLAY_combined.pdf}
-    \caption{SPLAY实验结果}
-    \label{fig:splay_results}
-\end{figure}
-Splay Tree在每次访问后将目标节点伸展到根，这使得它在访问局部性较强的场景下表现出色。
-在我们的实验中，Splay Tree的用时在有序插入和删除的情况下表现优异，尤其是在顺序删除的场景下，其用时几乎为常数。
+AVL和红黑树都利用旋转操作来维护树的平衡，在实验图像当中，红黑树的顺序插入的用时显著高于AVL树。
+可以证明，对于这两棵树，插入的路径（也即最右路径）分别是整棵树当中最长的根-叶路径。
+而AVL的平衡比红黑树更加严格，且在插入时最多仅需要一次旋转，所以在顺序插入时用时显著小于红黑树。
+对于随机插入，两棵树的用时相近。
+
+对于不同order的B+树，order同时决定了树高和结点内的操作代价：order越大，树高越低、查找路径上的指针跳转越少；
+但本实现的结点内关键字用有序数组保存，查找需要线性扫描，插入和删除需要整体搬移，单结点代价随order线性增长。
+因此存在一个与负载类型相关的最优order。以$N=1\times 10^5$为例，
+order为4时，层数大概是$log_4 100000 \approx 8.30$，
+order为20时。层数大概为$log_{20} 100000 \approx 3.84$层数降低了4层，
+而order为100时。层数大概为$log_{100} 100000 = 2.5$层数仅降低了1层左右，而结点内的线性扫描和分裂时的数组拷贝成为主要开销。
+所以order为100时的耗时反而相比于20时上升。
+随机插入的规律则不同，随机键在每一层都要做一次不可预测的指针跳转，跨层访存远贵于结点内的顺序扫描，
+这也是为什么随机插入时B+树order越大，插入耗时越短。
+
+\subsection{删除操作}
+
+与插入操作类似，删除操作的耗时主要取决于被删键在树中的位置，以及删除后需要做的平衡调整。
+整体上，有序删除（同序或逆序）明显快于随机删除：前者的目标始终位于树的一端，路径短且调整局部；
+后者的位置不可预测，旋转、合并和访存的开销都更大。
+
+对于SPLAY树，同序删除和逆序删除的均摊耗时几乎不随$N$增长。
+原因在于递增插入后树退化为一条以最大键为根的左链：逆序删除每次都删除根结点，只需把左子树（其根为剩余最大值）作为新树，代价为$O(1)$；
+同序删除第一次删除最小键时确实要走完整条左链并做$O(N)$次旋转，但这次操作会把剩余结点重排成以次小键为根的右链，
+此后每次删除都只需$O(1)$，因此$O(N)$的预处理代价被后续$N$次删除均摊掉，整体呈常数。
+随机删除则失去了这种局部性：每个待删键都要先伸展到根，再合并左右子树，链式结构被反复打散和重建，
+
+AVL树和红黑树的有序删除都很快，二者处于同一量级，且只随树高缓慢增长。
+随机删除则要昂贵得多。这是因为随机键的位置不可预测，删除后还要沿父链回溯做平衡修复。
+在两种树之间，AVL的平衡条件更严格（树高不超过约$1.44\log N$，红黑树最坏为$2\log N$），随机删除的查找路径更短，
+且删除后的重平衡通常能较早结束，因此随机删除反而是AVL更快；红黑树虽然旋转次数有常数上界，
+但删除修复需要沿父链多次变色，随机删除时的额外访存更明显。
+
+对于B+树，同序删除始终删除最左侧叶子中的最小键，通常只需修改叶子结点并更新祖先中的分隔键，不需要在树内寻找前驱或后继，并且结点内搜索的成本小，
+因此是同序/逆序/随机三种删除方式中最快的。
+逆序删除的代价明显高于同序删除，且order越大差距越明显：
+叶子分裂后右半部分恰好只有$\lfloor (order+1)/2\rfloor$个关键字，正好等于结点允许的最小关键字数，
+因此从最右侧开始删除会立刻触发借位或合并，并沿父链向上级联；每次合并都要搬移$O(order)$个关键字，
+所以order=100时逆序删除时间远大于order=10、20。
+随机删除是最慢的：任意叶子都可能因删除而下溢，借位/合并会在树中随机位置级联发生。
+order=4时树高最大，随着order增大、树高降低，该代价迅速下降。
+这也告诫我们要根据数据量、操作类型以及存储限制等要素选择合适的数据结构。
+
+\chapter{复杂度分析}
+设结点数为$n$，树高为$h$，B+树的order为$m$。五种结构的时间与空间复杂度汇总于表~\ref{tab:complexity}。
+
+\begin{table}[H]
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.3}
+  \caption{五种搜索树的复杂度对比}
+  \label{tab:complexity}
+  \begin{tabular}{|c|c|c|c|c|c|}
+    \hline
+    结构 & 查找 & 插入 & 删除 & 辅助空间 & 总空间 \\
+    \hline
+    BST   & 平均$O(\log n)$，最坏$O(n)$ & 同查找 & 同查找 & $O(1)$ & $O(n)$ \\
+    \hline
+    SPLAY & 均摊$O(\log n)$，最坏$O(n)$ & 均摊$O(\log n)$ & 均摊$O(\log n)$ & $O(1)$ & $O(n)$ \\
+    \hline
+    AVL   & $O(\log n)$ & $O(\log n)$ & $O(\log n)$ & $O(\log n)$ & $O(n)$ \\
+    \hline
+    RBT   & $O(\log n)$ & $O(\log n)$ & $O(\log n)$ & $O(1)$ & $O(n)$ \\
+    \hline
+    B+树  & $O(\log_m n)$次结点访问 & $O(\log_m n)$次结点访问 & $O(\log_m n)$次结点访问 & $O(\log_m n)$ & $O(n)$ \\
+    \hline
+  \end{tabular}
+\end{table}
+
+几点说明：
+\begin{itemize}
+  \item BST的平均复杂度只在随机插入下成立；有序插入会退化为链表，$h=n$，单次操作退化为$O(n)$。
+  \item SPLAY单次操作可能达到$O(n)$，但每次访问后的伸展保证了均摊$O(\log n)$，其优势在于访问局部性。
+  \item AVL与RBT的高度均为$O(\log n)$，因此最坏情况下仍为$O(\log n)$；AVL的平衡更严格、树高更低。
+  \item B+树的时间按“结点访问次数”计；若结点内用线性扫描，则比较与搬移次数为$O(m\log_m n)$。
+  \item 所有结构的总空间均为$O(n)$。辅助空间指递归栈或显式路径栈：BST、SPLAY、RBT用迭代/父指针实现，为$O(1)$；AVL和B+树为$O(h)$，即$O(\log n)$。
+  \item 建树$n$个结点：AVL、RBT、SPLAY为$O(n\log n)$（SPLAY为均摊），BST平均$O(n\log n)$、最坏$O(n^2)$，B+树为$O(n\log_m n)$。
+\end{itemize}
 
 \chapter{总结}
 本次实验，我们实现了五种常见的搜索树，并对它们在插入和删除操作上的性能进行了比较。

@@ -1,383 +1,207 @@
 # 不同搜索树的比较
 
-用 C 语言实现的 **普通二叉搜索树（BST）**、**伸展树（Splay Tree）**、**AVL 树**、**红黑树**（Red-Black Tree）与 **B+ 树**，并提供基准测试程序，对比几种搜索树在不同插入 / 删除顺序下的性能表现。所有树的插入、删除与释放均采用**迭代**实现，不使用递归。
+用 C 语言实现的五种搜索树及其基准测试程序：
 
-## 项目结构
+- **BST**：普通二叉搜索树
+- **SPLAY**：伸展树（Splay Tree）
+- **AVL**：AVL 树
+- **RBT**：红黑树（Red-Black Tree）
+- **BPT**：B+ 树
+
+程序以 `1..N` 为数据集合，测试递增插入与随机插入，以及同序、逆序、随机三种删除顺序的耗时，并将结果输出为 CSV；配套的 Python 脚本可生成 Altair 图表，`document/` 下包含完整的 LaTeX 实验报告。
+
+所有树的插入与删除均采用**迭代**实现，不使用递归。
+
+## 目录结构
 
 ```
 .
-├── BST.h / BST.c        # 普通二叉搜索树的实现（迭代）
-├── Splay.h / Splay.c    # 伸展树的实现（迭代）
-├── AVL.h / AVL.c        # AVL 树的实现
-├── RBT.h / RBT.c        # 红黑树的实现
-├── B+.h / B+.c          # B+ 树的实现
-├── BST.h / BST.c        # 二叉搜索树的实现
-├── Splay.h / Splay.c    # Splay树的实现
-├── main.c               # 基准测试入口
-├── visualie/
-│   └── draw.py          # 绘制实验图像
-└── BST.csv / AVL.csv / RBT.csv / BPT.csv / SPLAY.csv #BST、AVL、RBT、BPT、SPLAY原始实验数据
-|   └── AVL_combined.html/html    #AVL实验图像，分为线性坐标系以及对数坐标系   
-|   └── RBT_combined.html/html      #RBT实验图像，分为线性坐标系以及对数坐标系   
-|   └── BPT_combined.html/html     #BPT实验图像，分为线性坐标系以及对数坐标系   
-|   └── BST_combined.html/html     #BST实验图像，分为线性坐标系以及对数坐标系  
-|   └── SPLAY_combined.html/html     #Splay Tree实验图像，分为线性坐标系以及对数坐标系  
-├── document/
-│   └── report.tex        # 实验报告latex源码
-|   └── report.html        # 实验报告
-└── main                  # 编译产物（可执行文件）
+├── main.c                  # 基准测试入口
+├── BST.h / BST.c           # 普通二叉搜索树
+├── Splay.h / Splay.c       # 伸展树
+├── AVL.h / AVL.c           # AVL 树
+├── RBT.h / RBT.c           # 红黑树
+├── B+.h / B+.c             # B+ 树
+├── visualize/
+│   ├── draw.py             # 图表生成脚本（polars + altair）
+│   ├── *.html / *.pdf      # 已生成的图表
+│   └── csv/                # 基准测试原始数据
+│       ├── BST.csv
+│       ├── SPLAY.csv
+│       ├── AVL.csv
+│       ├── RBT.csv
+│       └── BPT*.csv        # BPT.csv 及 order=4/10/20/100 的数据
+└── document/
+    ├── report.tex          # 实验报告 LaTeX 源码
+    └── report.pdf          # 编译后的实验报告
 ```
 
-## 数据结构
+## 实现要点
 
-### 普通二叉搜索树（`BST.h`）
+| 结构 | 实现方式 |
+| ---- | -------- |
+| **BST** | 迭代插入/删除/查找；删除时用父指针定位，两个孩子时用右子树最小结点（后继）替换；不维护平衡。 |
+| **SPLAY** | 迭代实现 Zig-Zig / Zig-Zag 伸展；插入后新结点成为根；删除时先把目标伸展到根，再合并左右子树。 |
+| **AVL** | 结点保存 `height` 与平衡因子 `bf`；使用显式路径栈回溯，失衡时做 LL / RR / LR / RL 旋转。 |
+| **RBT** | 结点带 `parent` 指针；插入和删除均迭代修复红黑性质，删除使用 `transplant` + `deleteFixup`。 |
+| **B+ 树** | 多路平衡树，`order` 控制结点容量；内部结点按序保存分隔键，叶子结点用 `next` / `prev` 连成链表；插入分裂、删除借位/合并均用显式栈迭代完成。 |
+
+B+ 树默认 `order = 10`，写死在 `main.c` 中：
 
 ```c
-typedef struct TreeNode {
-    int val;
-    struct TreeNode *left;
-    struct TreeNode *right;
-} TreeNode;
+int order = 10;
 ```
 
-- 采用**迭代**方式实现插入、删除、查找与释放。
-- 插入：沿查找路径下降到空位置，重复键不重复插入。
-- 删除：使用可增长的动态数组保存根到目标结点的路径，代替递归回溯；
-  被删结点有两个孩子时，用右子树最小结点（后继）替换。
-- 释放：通过“左孩子上旋”遍历整棵树，额外空间为 O(1)，不使用递归。
-- 不保证平衡：有序数据插入时最坏退化为链表，单次操作 O(n)；
-  随机数据下平均为 O(log n)。
-
-### AVL 树（`AVL.h`）
-
-```c
-typedef struct nA {
-    struct nA* left;
-    struct nA* right;
-    int data;
-    int bf;       // 平衡因子 = 左子树高 - 右子树高
-    int height;   // 结点高度（叶子为 0）
-} Anode;
-```
-
-- 采用**迭代**方式实现插入与删除。
-- 通过 `update()` 维护高度与平衡因子，失衡时进行 LL / RR / LR / RL 旋转。
-- 删除时用右子树最小结点替换，再回溯修复平衡。
-
-### 伸展树（`Splay.h`）
-
-```c
-typedef struct SplayNode {
-    int val;
-    struct SplayNode *left;
-    struct SplayNode *right;
-} SplayNode;
-```
-
-- 采用**迭代**方式实现 `splay`、插入、删除、查找与释放。
-- 每次访问后通过 Zig-Zig / Zig-Zag 双旋转将目标结点（或最接近的结点）伸展到根。
-- 插入：先伸展，再把新结点作为根，原树拆成左右子树挂到新根下。
-- 删除：先把目标伸展到根，再合并左右子树；释放同样为迭代实现。
-- 单次操作最坏 O(n)，但**均摊**复杂度为 O(log n)，具有良好的局部性。
-
-### 红黑树（`RBT.h`）
-
-```c
-typedef struct nR {
-    struct nR* left;
-    struct nR* right;
-    struct nR* parent;   // 指向父结点
-    int data;
-    int color;           // RED(0) / BLACK(1)
-} Rnode;
-```
-
-- 采用**迭代**方式实现，结点带 `parent` 指针。
-- 插入：红黑性质调整，处理叔叔为红（变色上溯）与叔叔为黑（旋转）两类情况。
-- 删除：`transplant` + `deleteFixup`，完整处理兄弟结点四种情形。
-  
-### B+树（`B+.h`）
-
-```c
-typedef struct Bn
-{
-    int leaf;         // 是否为leaf结点
-    int* data;
-    int num;
-
-    struct Bn** children;
-    struct Bn* next;  // leaf节点的链表指针
-    struct Bn* prev;
-}BNode;
-typedef struct Bn* PtrToBNode;
-
-typedef struct 
-{
-    PtrToBNode root;   // 指向树根
-    PtrToBNode head;   // 指向链表头
-    int order;
-}BTree;
-```
-
-- 采用**迭代**的方式实现插入与删除，手动维护一个栈。
-- 插入：处理结点分裂，以及继续向上传递。
-- 删除：处理向兄弟节点借值，以及节点合并。
-- B+树的`order`在`main.c`文件当中写定，可以在当中修改。
-
+如需测试其他 order，修改该值后重新编译运行即可，输出的 `Tree_Type` 会变成 `BPT_<order>`。
 
 ## 编译
 
-```bash
-gcc -O2 -o main main.c AVL.c RBT.c B+.c BST.c Splay.c
-```
-
-> 建议开启 `-O2` 以更真实地反映运行性能；如需调试可加 `-g`。
-
-### 不同操作系统的命令
-
-**Linux / macOS**（使用 gcc）：
+要求 C11（使用 POSIX `clock_gettime`），Linux / macOS / MinGW 均可：
 
 ```bash
-gcc -O2 -o main main.c AVL.c RBT.c B+.c BST.c Splay.c   # 生成可执行文件 main
+gcc -O2 -std=gnu11 -o main main.c AVL.c RBT.c B+.c BST.c Splay.c
 ```
 
-**Windows（MinGW / MSYS2 / WSL）**：
-
-```bat
-:: MinGW / MSYS2：生成 main.exe，运行时可省略 .exe
-gcc -O2 -o main.exe main.c AVL.c RBT.c B+.c BST.c Splay.c
-
-:: 如果使用 MSVC（cl.exe），需手动指定源文件并生成 main.exe
-cl /O2 /Fe:main.exe main.c AVL.c RBT.c B+.c BST.c Splay.c
-```
-
-| 操作系统 | 可执行文件 | 打开生成的 HTML 图表 |
-| -------- | ---------- | -------------------- |
-| Linux    | `main`     | `xdg-open visualize/AVL_combined.html` |
-| macOS    | `main`     | `open visualize/AVL_combined.html` |
-| Windows  | `main.exe` | `start visualize\AVL_combined.html` |
+- 建议开启 `-O2`，否则计时结果参考意义不大。
+- 若提示 `clock_gettime` / `CLOCK_MONOTONIC` 未定义，可加 `-D_POSIX_C_SOURCE=199309L`，老版本 glibc 可能还需要 `-lrt`。
+- 当前实现依赖 POSIX 计时接口，**不支持 MSVC（cl.exe）**；Windows 下请使用 MinGW / MSYS2 或 WSL。
 
 ## 运行
 
-Linux / macOS：
-
 ```bash
-./main <结点数量> <迭代次数> <数据结构> <输出地址>
+./main <N1> [N2 ...] <迭代次数> <数据结构> <输出.csv>
 ```
 
-Windows（PowerShell 需加 `.\`，cmd 可直接写 `main.exe`）：
-
-```powershell
-# PowerShell
-.\main.exe <结点数量> <迭代次数> <数据结构> <输出地址>
-
-# cmd
-main.exe <结点数量> <迭代次数> <数据结构> <输出地址>
-```
-
-参数说明：
+最后三个参数固定为迭代次数、数据结构、输出路径；前面的所有参数都是结点数量，可以一次测试多个规模。
 
 | 参数 | 含义 | 取值 |
 | ---- | ---- | ---- |
-| 结点数量 | 每次构建树的结点个数（数据为 `1..N`），可以写多个 | 正整数 |
-| 迭代次数 | 重复构建 / 销毁的次数 | 正整数 |
-| 数据结构 | 选择被测树 | `BST`、`SPLAY`、`AVL`、`RBT` 或 `BPT` |
-| 输出地址 | 程序会将结果以csv的形式输出，此处填写输出结果的地址 | `.csv`文件路径 |
+| `N1 N2 ...` | 每次建树的结点数，数据为 `1..N` | 正整数，可多个 |
+| 迭代次数 | 对每个 `N` 重复“建树 + 删除”的轮数 | 正整数 |
+| 数据结构 | 被测结构 | `BST`、`SPLAY`（或 `SPT`）、`AVL`、`RBT`、`BPT` |
+| 输出路径 | CSV 输出位置，目录必须已存在 | `.csv` 路径 |
 
 示例：
 
 ```bash
-# 对 AVL 树测试 10000 个结点，重复 100 次，输出到./visualize/AVL.csv
-./main 10000 100 AVL ./visualize/AVL.csv
+# 测试 1000 ~ 500000 共 7 个规模，每个规模重复 10 次
+./main 1000 5000 10000 50000 100000 200000 500000 10 AVL   visualize/csv/AVL.csv
+./main 1000 5000 10000 50000 100000 200000 500000 10 RBT   visualize/csv/RBT.csv
+./main 1000 5000 10000 50000 100000 200000 500000 10 SPLAY visualize/csv/SPLAY.csv
+./main 1000 5000 10000 50000 100000 200000 500000 10 BPT   visualize/csv/BPT_10.csv
 
-# 对红黑树测试 10000 个结点，重复 100 次，输出到当前目录中的RBT.csv
-./main 10000 100 RBT ./RBT.csv
-
-# 对 AVL 树测试 1000、5000 个结点，重复 10 次，输出到./visualize/AVL.csv
-./main 1000 5000 10 AVL ./visualize/AVL.csv
-
-# 对 BPT 树测试 1000、5000 个结点，重复 10 次，order为10，输出到./visualize/BPT.csv
-./main 1000 5000 10 BPT ./visualize/BPT.csv
-
-# 对普通 BST 测试 10000 个结点，重复 100 次，输出到./visualize/BST.csv
-./main 10000 100 BST ./visualize/BST.csv
-
-# 对伸展树测试 10000 个结点，重复 100 次，输出到./visualize/SPLAY.csv
-./main 10000 100 SPLAY ./visualize/SPLAY.csv
+# BST 在有序插入时会退化为链表，500000 个结点单次运行可能需要数分钟
+./main 1000 5000 10000 50000 100000 200000 500000 1 BST visualize/csv/BST.csv
 ```
 
-> `SPLAY` 也可以简写为 `SPT`。B+ 树的 `order` 在 `main.c` 中写定为 10。
+> B+ 树的 `order` 不是命令行参数；要测 order=4/20/100，请修改 `main.c` 中的 `order` 后重新编译。
 
-> 计时使用 `clock_gettime(CLOCK_MONOTONIC)` 的**毫秒级**单调时钟，不受系统时间调整影响。
+### 测试流程
 
-每种结构都会测试三种删除顺序（插入顺序固定为递增的 `1..N`）：
+对每个结点数 `N` 和每一轮迭代，分别测试以下三种情况：
 
-1. **同序删除**：按插入顺序 `1..N` 删除；
-2. **逆序删除**：按 `N..1` 逆序删除；
-3. **随机删除**：由 C 内置的 Fisher-Yates 洗牌生成的随机排列顺序删除。
+1. **Same_Order**：按 `1..N` 递增顺序插入，再按 `1..N` 同序删除；
+2. **Reverse_Order**：按 `1..N` 递增顺序插入，再按 `N..1` 逆序删除；
+3. **Random_Order**：用 Fisher-Yates 洗牌生成随机排列并随机插入，再生成一个新的随机排列随机删除。
 
-> 每轮迭代中**插入耗时与删除耗时分别独立计时**，因此输出中会同时给出插入和删除的总耗时与平均耗时。
+每次插入和删除各自独立计时，重复 `迭代次数` 轮后将耗时累加写入 CSV。
 
-> 随机顺序在 `main.c` 中直接生成（`Random_order`），随机种子为当前系统时间，
-> 不依赖外部脚本。
+计时使用 `clock_gettime(CLOCK_MONOTONIC)`，单位为毫秒，不受系统时间调整影响。随机顺序在程序内生成，随机种子为 `time(NULL)`，不依赖外部脚本。
 
-输出示例：
+### CSV 字段
 
-Terminal
-``` 
-BST, delete in same order
-number of node:10000,iteration:100 insert time cost:12.500 ms, delete time cost:0.570 ms
-BST, delete in reverse order
-number of node:10000,iteration:100 insert time cost:12.660 ms, delete time cost:250.339 ms
-BST, delete in random order
-number of node:10000,iteration:100 insert time cost:12.300 ms, delete time cost:65.299 ms
-```
-.csv文件
-``` 
-Tree_Type,Number_of_Node,Delete_Order,Iteration,Insert_Time_Cost_Total,Insert_Time_Cost_Average,Insert_Time_Cost_Amortized,Delete_Time_Cost_Total,Delete_Time_Cost_Average,Delete_Time_Cost_Amortized
-BST,1000,Same_Order,10,0.420000,0.042000,0.000042,0.274000,0.027400,0.000027
-SPLAY,1000,Same_Order,10,0.051000,0.005100,0.000005,0.070000,0.007000,0.000007
-```
+| 字段 | 含义 |
+| ---- | ---- |
+| `Tree_Type` | 结构名称；B+ 树为 `BPT_<order>` |
+| `Number_of_Node` | 结点数 `N` |
+| `Delete_Order` | `Same_Order` / `Reverse_Order` / `Random_Order` |
+| `Iteration` | 迭代次数 |
+| `Insert_Time_Cost_Total` | 所有迭代的插入总耗时（ms） |
+| `Insert_Time_Cost_Average` | 平均每轮插入耗时（ms） |
+| `Insert_Time_Cost_Amortized` | 平均每次插入耗时（ms/op） |
+| `Delete_Time_Cost_Total` | 所有迭代的删除总耗时（ms） |
+| `Delete_Time_Cost_Average` | 平均每轮删除耗时（ms） |
+| `Delete_Time_Cost_Amortized` | 平均每次删除耗时（ms/op） |
 
-# 可视化
-本实验的绘图所用的python库有**polars**以及**altair**，请确保你的python环境已安装这两种库。
+> `Amortized` 列 = `Total / (Iteration × N)`。乘以 `10^6` 可换算为 ns/op。
+>
+> 插入耗时的建树方式与本行的 `Delete_Order` 对应：`Same_Order` 和 `Reverse_Order` 行为递增插入，`Random_Order` 行为随机插入。
 
-``` bash
-python visualize/draw.py <原始csv文件路径> <需保存的格式>
-```
+## 可视化
 
-> Windows 下如果 `python` 不可用，可改用 `py -3`，如 `py -3 visualize/draw.py visualize/AVL.csv html`。
-
-参数说明：
-
-| 参数 | 含义 | 取值 |
-| ---- | ---- | ---- |
-| 原始csv文件路径 | 原始数据 | `.csv`文件路径 |
-| 需保存的格式 | 保存的格式 | `html png`等 |
-
-示例
-```bash
-# 根据 CSV 生成线性坐标图、双对数坐标图并排组合图，保存为 html：
-
-python visualize/draw.py visualize/AVL.csv html
-```
-
-该命令会生成 `visualize/AVL_combined.html`，左图为线性坐标、右图为对数坐标，
-并在同一张图中对比**插入**与**删除**的平均耗时（不同删除顺序用点形状区分）。
-图表包含标题，并可悬停数据点查看详细数据。
-
-## 快速运行
-
-下面按操作系统分别给出可直接复制粘贴的完整命令（含编译、测试、绘图、打开图表）。
-
-### Linux
+图表脚本会读取 `visualize/csv/` 下的固定文件，因此**必须在项目根目录执行**：
 
 ```bash
-# 1. 编译
-gcc -O2 -o main main.c AVL.c RBT.c B+.c BST.c Splay.c
-
-# 2. 运行基准测试（节点数 1000~500000，迭代 10 次）
-./main 1000 5000 10000 50000 100000 200000 500000 10 AVL visualize/AVL.csv
-./main 1000 5000 10000 50000 100000 200000 500000 10 RBT visualize/RBT.csv
-./main 1000 5000 10000 50000 100000 200000 500000 10 BPT visualize/BPT.csv
-./main 1000 5000 10000 50000 100000 200000 500000 10 SPLAY visualize/SPLAY.csv
-# BST 在有序插入时会退化为链表，建议使用较小规模
-./main 1000 5000 10000 50000 100000 200000 500000 1 BST visualize/BST.csv
-
-# 3. 生成图表（线性坐标 + 双对数坐标并排组合图）
-python visualize/draw.py visualize/AVL.csv html
-python visualize/draw.py visualize/RBT.csv html
-python visualize/draw.py visualize/BPT.csv html
-python visualize/draw.py visualize/SPLAY.csv html
-python visualize/draw.py visualize/BST.csv html
-
-# 4. 用浏览器打开图表
-xdg-open visualize/AVL_combined.html
-xdg-open visualize/RBT_combined.html
-xdg-open visualize/BPT_combined.html
-xdg-open visualize/SPLAY_combined.html
-xdg-open visualize/BST_combined.html
+pip install polars altair
+python visualize/draw.py html
 ```
 
-### macOS
+`html` 可换成 `pdf`；导出 PDF 还需安装 Altair 的 PDF 导出依赖（如 `vl-convert-python`）。Windows 下若 `python` 不可用，可改用 `py -3 visualize/draw.py html`。
 
-```bash
-# 1. 编译
-gcc -O2 -o main main.c AVL.c RBT.c B+.c BST.c Splay.c
+脚本会生成 7 张图：
 
-# 2. 运行基准测试（节点数 1000~500000，迭代 10 次）
-./main 1000 5000 10000 50000 100000 200000 500000 10 AVL visualize/AVL.csv
-./main 1000 5000 10000 50000 100000 200000 500000 10 RBT visualize/RBT.csv
-./main 1000 5000 10000 50000 100000 200000 500000 10 BPT visualize/BPT.csv
-./main 1000 5000 10000 50000 100000 200000 500000 10 SPLAY visualize/SPLAY.csv
-# BST 在有序插入时会退化为链表，建议使用较小规模
-./main 1000 5000 10000 50000 100000 200000 500000 1 BST visualize/BST.csv
+| 文件 | 内容 |
+| ---- | ---- |
+| `Increase_insert` | 递增插入耗时对比 |
+| `Same_delete` | 同序删除耗时对比 |
+| `Reverse_delete` | 逆序删除耗时对比 |
+| `Random_insert` | 随机插入耗时对比 |
+| `Random_delete` | 随机删除耗时对比 |
+| `Increase_insert_without_BST` | 去掉 BST 后的递增插入对比 |
+| `Reverse_delete_without_BST` | 去掉 BST 后的逆序删除对比 |
 
-# 3. 生成图表（线性坐标 + 双对数坐标并排组合图）
-python3 visualize/draw.py visualize/AVL.csv html
-python3 visualize/draw.py visualize/RBT.csv html
-python3 visualize/draw.py visualize/BPT.csv html
-python3 visualize/draw.py visualize/SPLAY.csv html
-python3 visualize/draw.py visualize/BST.csv html
+每张图都是“结点数—均摊耗时”的折线图，`Tree_Type` 用颜色区分，悬停可查看具体数据。
 
-# 4. 用浏览器打开图表
-open visualize/AVL_combined.html
-open visualize/RBT_combined.html
-open visualize/BPT_combined.html
-open visualize/SPLAY_combined.html
-open visualize/BST_combined.html
-```
+## 实验数据与观察
 
-### Windows（PowerShell）
+`visualize/csv/` 中已包含 `N = 1000, 5000, 10000, 50000, 100000, 200000, 500000` 的测试结果（`BPT.csv` 为早期数据；`draw.py` 使用 `BPT_4/10/20/100.csv`）。
 
-```powershell
-# 1. 编译（需已安装 MinGW/MSYS2 的 gcc）
-gcc -O2 -o main.exe main.c AVL.c RBT.c B+.c BST.c Splay.c
+以 `N = 5×10^5` 的数据为例（BST 为 1 次迭代，其余为 10 次；单位 ns/op）：
 
-# 2. 运行基准测试（节点数 1000~500000，迭代 10 次）
-.\main.exe 1000 5000 10000 50000 100000 200000 500000 10 AVL visualize/AVL.csv
-.\main.exe 1000 5000 10000 50000 100000 200000 500000 10 RBT visualize/RBT.csv
-.\main.exe 1000 5000 10000 50000 100000 200000 500000 10 BPT visualize/BPT.csv
-.\main.exe 1000 5000 10000 50000 100000 200000 500000 10 SPLAY visualize/SPLAY.csv
-# BST 在有序插入时会退化为链表，建议使用较小规模
-.\main.exe 1000 5000 10000 50000 100000 200000 500000 1 BST visualize/BST.csv
+| 结构 | 同序插入 | 同序删除 | 逆序删除 | 随机插入 | 随机删除 |
+| ---- | -------: | -------: | -------: | -------: | -------: |
+| BST | 351309 | 9 | 445459 | 308 | 218 |
+| SPLAY | 23 | 30 | 28 | 563 | 661 |
+| AVL | 53 | 47 | 45 | 439 | 432 |
+| RBT | 112 | 41 | 52 | 452 | 608 |
+| BPT（order=10） | 36 | 24 | 46 | 149 | 213 |
 
-# 3. 生成图表（python 不可用时改用 py -3）
-python visualize/draw.py visualize/AVL.csv html
-python visualize/draw.py visualize/RBT.csv html
-python visualize/draw.py visualize/BPT.csv html
-python visualize/draw.py visualize/SPLAY.csv html
-python visualize/draw.py visualize/BST.csv html
+主要结论：
 
-# 4. 用浏览器打开图表
-start visualize\AVL_combined.html
-start visualize\RBT_combined.html
-start visualize\BPT_combined.html
-start visualize\SPLAY_combined.html
-start visualize\BST_combined.html
-```
+- **BST**：随机数据下表现正常，但递增插入会退化为链表，单次插入/逆序删除达到数百微秒，比平衡树慢几个数量级。
+- **SPLAY**：有序删除的均摊耗时几乎不随 `N` 增长，体现了很好的局部性；但随机访问会把结点反复伸展到根，随机删除是三种平衡结构中最慢的。
+- **AVL / RBT**：有序操作在几十到一百多纳秒量级；随机操作需要更多旋转、变色和随机访存，约慢一个数量级。随机删除时 AVL 反而略快于 RBT。
+- **B+ 树**：结点扇出大、树高低，随机操作明显快于二叉树；增大 `order` 可进一步降低随机访问的层数，但结点内线性扫描和分裂/合并的搬移代价会上升，有序负载下 order 过大反而变慢。
 
-> 无论哪种系统，都要在项目根目录下执行这些命令。
+> 上述数值与机器、编译选项和系统负载有关，重点应关注不同结构之间的变化趋势，而不是绝对时间。
 
 ## 复杂度
 
-| 操作 | 普通 BST | 伸展树 | AVL 树 | 红黑树 | B+树 |
-| ---- | -------- | ------ | ------ | ------ | ----- |
-| 查找 | O(n) 最坏 / O(log n) 平均 | 均摊 O(log n) | O(log n) | O(log n) | O(log_m n) |
-| 插入 | O(n) 最坏 / O(log n) 平均 | 均摊 O(log n) | O(log n) | O(log n) | O(log_m n) |
-| 删除 | O(n) 最坏 / O(log n) 平均 | 均摊 O(log n) | O(log n) | O(log n) | O(log_m n) |
-| 平衡严格程度 | 不保证平衡，有序数据会退化为链表 | 不保证单次平衡，但访问后自动调整形状 | 高度平衡（左右子树高差 ≤ 1） | 近似平衡（最长路径 ≤ 2×最短路径） | 多路平衡分支，内部结点按序存储、叶子结点链表相连 |
+设结点数为 `n`，树高为 `h`，B+ 树的 order 为 `m`。
 
-- 普通 BST 实现最简单，随机数据下表现良好，但最坏情况退化为链表；
-- 伸展树不需要额外的平衡信息，均摊 O(log n)，适合存在局部性（频繁访问相近键）的场景；
-- AVL 树平衡更严格，查找更快，但插入 / 删除时旋转更频繁；
-- 红黑树平衡较宽松，插入 / 删除的旋转次数更少，综合增删性能通常更优；
-- B+ 树的分支因子为 `m`，每次查找 / 插入 / 删除都在 `O(log_m n)` 的层级上进行，适合范围查询和磁盘索引场景。
+| 结构 | 查找 | 插入 | 删除 | 辅助空间 | 总空间 |
+| ---- | ---- | ---- | ---- | -------- | ------ |
+| BST | 平均 `O(log n)`，最坏 `O(n)` | 同查找 | 同查找 | `O(1)` | `O(n)` |
+| SPLAY | 均摊 `O(log n)`，单次最坏 `O(n)` | 均摊 `O(log n)` | 均摊 `O(log n)` | `O(1)` | `O(n)` |
+| AVL | `O(log n)` | `O(log n)` | `O(log n)` | `O(log n)` | `O(n)` |
+| RBT | `O(log n)` | `O(log n)` | `O(log n)` | `O(1)` | `O(n)` |
+| B+ 树 | `O(log_m n)` 次结点访问 | `O(log_m n)` 次结点访问 | `O(log_m n)` 次结点访问 | `O(log_m n)` | `O(n)` |
 
-## 实现方式
+- B+ 树若结点内使用线性扫描，比较/搬移次数为 `O(m log_m n)`；`m` 视为常数时即为 `O(log n)`。
+- AVL 和 B+ 树在实现中使用显式路径栈，辅助空间为 `O(h)`；BST、SPLAY、RBT 通过父指针或原地旋转实现，辅助空间为 `O(1)`。
+- 构建 `n` 个结点：AVL / RBT 为 `O(n log n)`，SPLAY 为均摊 `O(n log n)`，BST 平均 `O(n log n)`、最坏 `O(n^2)`，B+ 树为 `O(n log_m n)`。
 
-- **普通 BST**：插入、查找、删除、释放均为**迭代**实现；删除使用可增长的显式路径栈，释放使用 O(1) 额外空间的指针旋转遍历。
-- **伸展树**：`splay`、插入、删除、查找均为**迭代**实现，`splay` 使用左右两棵临时树重组，释放同样不使用递归。
-- **AVL 树**：插入 / 删除均为**迭代**实现，使用显式路径栈代替递归调用栈。
-- **红黑树**：插入 / 删除同样为**迭代**实现，借助 `parent` 指针回溯调整。
-- **B+ 树**：采用多路分支结构，使用 `order` 控制每个结点的最大关键字数，并维护叶子结点之间的链表以支持顺序访问和范围查询。
+## 实验报告
+
+`document/report.tex` 是完整的 LaTeX 报告，包含各结构的算法描述、插入/删除实验结果、不同 order 的 B+ 树对比以及复杂度分析；`document/report.pdf` 为编译产物。
+
+```bash
+cd document
+latexmk -xelatex report.tex
+```
+
+## 注意事项
+
+- 命令行参数没有做合法性检查，请确保结点数、迭代次数为正整数，且输出目录已存在。
+- 运行 BST 的大规模有序测试会非常慢，建议减少结点数或迭代次数。
+- `main` 为编译产物，修改源码后请重新编译，避免使用旧二进制。
